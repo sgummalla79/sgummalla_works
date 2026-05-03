@@ -560,7 +560,7 @@ function iconFor(status: FrontdoorLog["status"]) {
 }
 .sf-modal__close:hover {
   color: #f76300;
-  background: rgba(247,99,0,0.14);
+  background: rgba(247, 99, 0, 0.14);
 }
 
 .sf-modal__body {
@@ -645,7 +645,9 @@ function iconFor(status: FrontdoorLog["status"]) {
   font-weight: 600;
   cursor: pointer;
   font-family: inherit;
-  transition: background 0.15s, color 0.15s;
+  transition:
+    background 0.15s,
+    color 0.15s;
 }
 .sf-btn-open:hover {
   background: var(--vz-orange);

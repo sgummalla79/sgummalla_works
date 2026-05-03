@@ -241,7 +241,9 @@ async function handleLogout() {
   font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s;
+  transition:
+    background 0.15s,
+    color 0.15s;
   white-space: nowrap;
 }
 

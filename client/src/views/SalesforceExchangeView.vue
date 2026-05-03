@@ -362,7 +362,9 @@ onMounted(loadClients);
             no Salesforce username or password required.
           </p>
         </div>
-        <Button variant="primary" @click="openRegisterFlyout">+ Register</Button>
+        <Button variant="primary" @click="openRegisterFlyout"
+          >+ Register</Button
+        >
       </div>
 
       <p v-if="loadError" class="sf-msg sf-msg--err">{{ loadError }}</p>

@@ -195,7 +195,9 @@ onMounted(async () => {
   font-size: 0.9rem;
   font-weight: 500;
   text-decoration: none;
-  transition: background 0.15s, color 0.15s;
+  transition:
+    background 0.15s,
+    color 0.15s;
   box-sizing: border-box;
 }
 

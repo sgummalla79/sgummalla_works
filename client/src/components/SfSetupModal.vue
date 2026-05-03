@@ -1095,7 +1095,9 @@ function download(content: string, filename: string) {
   padding: 0.35rem 0.75rem;
   cursor: pointer;
   border: 1px solid;
-  transition: background 0.15s, color 0.15s;
+  transition:
+    background 0.15s,
+    color 0.15s;
 }
 
 .sf-cert-dl:hover {
@@ -1273,7 +1275,7 @@ function download(content: string, filename: string) {
 
 .sf-setup-inline {
   font-family: var(--vz-font-mono);
-  font-size: 1.0em;
+  font-size: 1em;
   color: var(--vz-text);
   background: var(--vz-surface2);
   border: 1px solid var(--vz-border);
@@ -1325,7 +1327,9 @@ function download(content: string, filename: string) {
   border-radius: var(--vz-radius-md);
   padding: 0.45rem 0.875rem;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s;
+  transition:
+    background 0.15s,
+    color 0.15s;
 }
 
 .sf-setup-footer__register:hover {
