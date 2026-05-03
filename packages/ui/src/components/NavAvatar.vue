@@ -336,21 +336,22 @@ onUnmounted(() =>
   align-items: center;
   justify-content: center;
   transition:
-    border-color 0.15s,
-    background 0.15s;
+    background 0.15s,
+    box-shadow 0.15s,
+    filter 0.15s;
 }
 
 .vz-avatar-btn:hover {
-  border-color: var(--vz-orange);
-  background: var(--vz-orange-dim);
+  background: var(--vz-orange);
+  box-shadow: 0 0 0 3px var(--vz-orange-dim);
 }
 
 .vz-avatar-btn--light {
   background: var(--vz-orange);
 }
 .vz-avatar-btn--light:hover {
-  background: var(--vz-orange);
-  opacity: 0.88;
+  background: var(--vz-orange-dim);
+  box-shadow: 0 0 0 3px var(--vz-orange-dim);
 }
 
 .vz-avatar-icon {
@@ -359,6 +360,11 @@ onUnmounted(() =>
   display: block;
   flex-shrink: 0;
   color: #fff;
+  transition: color 0.15s;
+}
+
+.vz-avatar-btn--light:hover .vz-avatar-icon {
+  color: var(--vz-orange);
 }
 
 /* Dropdown */
