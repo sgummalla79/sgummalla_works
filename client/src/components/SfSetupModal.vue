@@ -897,7 +897,7 @@ function download(content: string, filename: string) {
 }
 
 .sf-setup-modal--wide {
-  width: 820px;
+  width: 920px;
 }
 
 /* ── Header ── */
@@ -926,14 +926,14 @@ function download(content: string, filename: string) {
 
 .sf-setup-header__eyebrow {
   font-family: var(--vz-font-mono);
-  font-size: 0.65rem;
+  font-size: 0.95rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--vz-text3);
 }
 
 .sf-setup-header__title {
-  font-size: 0.92rem;
+  font-size: 1.02rem;
   font-weight: 600;
   color: var(--vz-text);
   margin-top: 0.1rem;
@@ -989,13 +989,13 @@ function download(content: string, filename: string) {
 }
 
 .sf-cert-box__title {
-  font-size: 0.875rem;
+  font-size: 0.975rem;
   font-weight: 600;
   color: var(--vz-text);
 }
 
 .sf-cert-box__desc {
-  font-size: 0.78rem;
+  font-size: 0.88rem;
   color: var(--vz-text3);
   margin-top: 0.15rem;
   line-height: 1.5;
@@ -1016,7 +1016,7 @@ function download(content: string, filename: string) {
 
 .sf-cert-box__label {
   font-family: var(--vz-font-mono);
-  font-size: 0.65rem;
+  font-size: 0.95rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--vz-text3);
@@ -1028,7 +1028,7 @@ function download(content: string, filename: string) {
   border-radius: var(--vz-radius-md);
   padding: 0.45rem 0.7rem;
   font-family: var(--vz-font-mono);
-  font-size: 0.78rem;
+  font-size: 0.88rem;
   color: var(--vz-text);
   outline: none;
   transition: border-color 0.15s;
@@ -1043,7 +1043,7 @@ function download(content: string, filename: string) {
   align-items: center;
   gap: 0.4rem;
   font-family: var(--vz-font-mono);
-  font-size: 0.75rem;
+  font-size: 0.95rem;
   letter-spacing: 0.05em;
   color: var(--vz-text);
   background: var(--vz-surface2);
@@ -1088,7 +1088,7 @@ function download(content: string, filename: string) {
   align-items: center;
   gap: 0.35rem;
   font-family: var(--vz-font-mono);
-  font-size: 0.72rem;
+  font-size: 0.82rem;
   letter-spacing: 0.04em;
   border-radius: var(--vz-radius-sm);
   padding: 0.35rem 0.75rem;
@@ -1114,7 +1114,7 @@ function download(content: string, filename: string) {
 }
 
 .sf-cert-box__note {
-  font-size: 0.775rem;
+  font-size: 0.975rem;
   color: var(--vz-green);
   line-height: 1.5;
 }
@@ -1143,28 +1143,28 @@ function download(content: string, filename: string) {
   align-items: center;
   justify-content: center;
   font-family: var(--vz-font-mono);
-  font-size: 0.72rem;
+  font-size: 0.82rem;
   font-weight: 700;
   color: var(--vz-text2);
   flex-shrink: 0;
 }
 
 .sf-setup-step__title {
-  font-size: 0.875rem;
+  font-size: 0.975rem;
   font-weight: 600;
   color: var(--vz-text);
   margin-bottom: 0.3rem;
 }
 
 .sf-setup-step__desc {
-  font-size: 0.825rem;
+  font-size: 0.925rem;
   color: var(--vz-text2);
   line-height: 1.55;
   margin-bottom: 0.5rem;
 }
 
 .sf-setup-step__note {
-  font-size: 0.775rem;
+  font-size: 0.975rem;
   color: var(--vz-text3);
   line-height: 1.5;
   margin-top: 0.5rem;
@@ -1180,7 +1180,7 @@ function download(content: string, filename: string) {
   border: 1px solid
     color-mix(in srgb, var(--vz-amber, #f59e0b) 40%, transparent);
   background: color-mix(in srgb, var(--vz-amber, #f59e0b) 8%, transparent);
-  font-size: 0.775rem;
+  font-size: 0.975rem;
   color: var(--vz-text2);
   line-height: 1.55;
 }
@@ -1201,7 +1201,7 @@ function download(content: string, filename: string) {
 }
 
 .sf-setup-list li {
-  font-size: 0.825rem;
+  font-size: 0.925rem;
   color: var(--vz-text2);
   line-height: 1.5;
   padding-left: 1rem;
@@ -1218,7 +1218,7 @@ function download(content: string, filename: string) {
 .sf-setup-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.8rem;
+  font-size: 0.9rem;
   margin-top: 0.5rem;
 }
 
@@ -1238,7 +1238,7 @@ function download(content: string, filename: string) {
 
 .sf-setup-table td:first-child {
   font-family: var(--vz-font-mono);
-  font-size: 0.72rem;
+  font-size: 0.82rem;
   color: var(--vz-text3);
   white-space: nowrap;
   width: 38%;
@@ -1258,9 +1258,10 @@ function download(content: string, filename: string) {
 .sf-setup-code code {
   display: block;
   font-family: var(--vz-font-mono);
-  font-size: 0.72rem;
+  font-size: 0.95rem;
   color: var(--vz-green);
-  white-space: pre;
+  white-space: pre-wrap;
+  word-break: break-word;
   line-height: 1.65;
 }
 
@@ -1270,7 +1271,7 @@ function download(content: string, filename: string) {
 
 .sf-setup-inline {
   font-family: var(--vz-font-mono);
-  font-size: 0.78em;
+  font-size: 1.0em;
   color: var(--vz-text);
   background: var(--vz-surface2);
   border: 1px solid var(--vz-border);
@@ -1292,7 +1293,7 @@ function download(content: string, filename: string) {
 
 .sf-setup-footer__cancel {
   font-family: var(--vz-font-sans);
-  font-size: 0.85rem;
+  font-size: 0.95rem;
   color: var(--vz-text3);
   background: none;
   border: 1px solid var(--vz-border);
@@ -1314,7 +1315,7 @@ function download(content: string, filename: string) {
   align-items: center;
   gap: 0.4rem;
   font-family: var(--vz-font-sans);
-  font-size: 0.85rem;
+  font-size: 0.95rem;
   font-weight: 500;
   color: var(--vz-bg);
   background: var(--vz-text);
