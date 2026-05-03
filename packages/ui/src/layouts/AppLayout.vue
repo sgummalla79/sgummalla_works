@@ -7,20 +7,19 @@ import NavBar from "../components/NavBar.vue";
 import NavLink from "../components/NavLink.vue";
 import NavGroup from "../components/NavGroup.vue";
 import NavAvatar from "../components/NavAvatar.vue";
+import NavLogo from "../components/NavLogo.vue";
 import SymbolLayer from "../components/SymbolLayer.vue";
-import logoLight from "../assets/logo-light.svg";
-import logoDark from "../assets/logo-dark.svg";
 
 // ── Nav tiers — single source of truth ───────────────────────────────────────
 // Add / remove items here only. No view should build its own nav list.
 
 const DEMOS_NAV = [
   { name: "auths", label: "Integrations", href: "/auths" },
-  { name: "salesforce", label: "JWT Bearer Auth", href: "/salesforce" },
+  { name: "salesforce", label: "JWT Bearer Auth", href: "/salesforce/jwtbearer" },
   {
     name: "salesforce-exchange",
     label: "Token Exchange Auth",
-    href: "/salesforce-exchange",
+    href: "/salesforce/token-exchange",
   },
 ];
 
@@ -86,11 +85,7 @@ function toggleTheme() {
     <NavBar>
       <template #brand>
         <div class="vz-nav-brand-inner">
-          <img
-            :src="themeMode === 'light' ? logoLight : logoDark"
-            alt="Sgummalla Works"
-            class="vz-nav-logo"
-          />
+          <NavLogo />
           <span class="vz-nav-slogan"
             >Ideas in Motion, Think. Build. Demo.</span
           >
@@ -140,7 +135,7 @@ function toggleTheme() {
             </svg>
             Integrations
           </NavLink>
-          <NavLink href="/salesforce" :active="activePage === 'salesforce'">
+          <NavLink href="/salesforce/jwtbearer" :active="activePage === 'salesforce'">
             <svg
               width="14"
               height="14"
@@ -158,7 +153,7 @@ function toggleTheme() {
             JWT Bearer Auth
           </NavLink>
           <NavLink
-            href="/salesforce-exchange"
+            href="/salesforce/token-exchange"
             :active="activePage === 'salesforce-exchange'"
           >
             <svg
@@ -268,12 +263,6 @@ function toggleTheme() {
   gap: 0.1rem;
 }
 
-.vz-nav-logo {
-  height: 26px;
-  width: auto;
-  display: block;
-  object-fit: contain;
-}
 
 .vz-nav-signin {
   display: inline-flex;
@@ -282,10 +271,10 @@ function toggleTheme() {
   font-family: var(--vz-font-sans);
   font-size: 0.825rem;
   font-weight: 500;
-  color: var(--vz-green);
+  color: var(--vz-orange);
   text-decoration: none;
   padding: 0.35rem 0.85rem;
-  border: 1px solid var(--vz-green);
+  border: 1px solid var(--vz-orange);
   border-radius: var(--vz-radius-md);
   transition:
     color 0.15s,
@@ -295,9 +284,9 @@ function toggleTheme() {
 }
 
 .vz-nav-signin:hover {
-  color: var(--vz-bg);
-  background: var(--vz-green);
-  border-color: var(--vz-green);
+  color: #fff;
+  background: var(--vz-orange);
+  border-color: var(--vz-orange);
 }
 
 .vz-nav-slogan {
@@ -384,7 +373,7 @@ function toggleTheme() {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--vz-green, #5ae89a);
+  background: var(--vz-orange, #f76300);
   animation: vz-pulse 2.5s ease-in-out infinite;
 }
 

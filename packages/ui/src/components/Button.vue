@@ -73,12 +73,14 @@ withDefaults(
 
 /* ── Variants ── */
 .vz-btn--primary {
-  background: var(--vz-text);
-  color: var(--vz-bg);
-  border-color: transparent;
+  background: transparent;
+  color: var(--vz-orange);
+  border-color: var(--vz-orange);
 }
 .vz-btn--primary:hover:not(:disabled) {
-  opacity: 0.88;
+  background: var(--vz-orange);
+  color: #fff;
+  border-color: var(--vz-orange);
 }
 
 .vz-btn--ghost {
@@ -87,9 +89,9 @@ withDefaults(
   border-color: var(--vz-border2);
 }
 .vz-btn--ghost:hover:not(:disabled) {
-  border-color: var(--vz-text);
-  color: var(--vz-text);
-  background: var(--vz-surface);
+  border-color: var(--vz-orange);
+  color: var(--vz-orange);
+  background: var(--vz-orange-dim);
 }
 
 .vz-btn--danger {

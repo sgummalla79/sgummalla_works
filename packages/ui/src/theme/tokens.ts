@@ -16,6 +16,8 @@ export interface SgwTheme {
     red: string;
     redDim: string;
     amber: string;
+    orange: string;
+    orangeDim: string;
     symbolColor: string;
   };
   font: {
@@ -52,6 +54,8 @@ export const cssVarMap: Record<string, string> = {
   "colors.red": "--vz-red",
   "colors.redDim": "--vz-red-dim",
   "colors.amber": "--vz-amber",
+  "colors.orange": "--vz-orange",
+  "colors.orangeDim": "--vz-orange-dim",
   "colors.symbolColor": "--vz-symbol-color",
   "font.sans": "--vz-font-sans",
   "font.mono": "--vz-font-mono",

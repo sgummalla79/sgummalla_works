@@ -389,37 +389,40 @@ function iconFor(status: FrontdoorLog["status"]) {
 .vz-te-wrap {
   display: flex;
   align-items: center;
+  width: 100%;
 }
 
 .vz-te-dropdown {
   position: relative;
+  width: 100%;
 }
 
 .vz-te-btn {
-  display: inline-flex;
+  display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0.35rem;
+  width: 100%;
   padding: 0.32rem 0.75rem;
   font-size: 0.78rem;
   font-weight: 600;
   font-family: var(--vz-font-sans);
-  color: var(--vz-green);
-  background: var(--vz-green-dim);
-  border: 1px solid var(--vz-green);
+  color: var(--vz-orange);
+  background: transparent;
+  border: 1px solid var(--vz-orange);
   border-radius: var(--vz-radius-sm);
   cursor: pointer;
   transition:
     background 0.15s,
-    opacity 0.15s;
+    color 0.15s;
   white-space: nowrap;
-  max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   letter-spacing: 0.01em;
 }
 .vz-te-btn:hover:not(:disabled) {
-  background: var(--vz-green-dim);
-  opacity: 0.8;
+  background: var(--vz-orange);
+  color: #fff;
 }
 .vz-te-btn:disabled {
   opacity: 0.4;
@@ -430,14 +433,14 @@ function iconFor(status: FrontdoorLog["status"]) {
   position: absolute;
   top: calc(100% + 6px);
   left: 0;
-  min-width: 190px;
-  max-width: 260px;
+  min-width: 100%;
+  max-width: 300px;
   background: var(--vz-bg);
-  border: 1.5px solid var(--vz-green);
+  border: 1.5px solid var(--vz-orange);
   border-radius: var(--vz-radius-md);
   box-shadow:
     0 8px 32px rgba(0, 0, 0, 0.4),
-    0 0 16px rgba(90, 232, 154, 0.08);
+    0 0 16px rgba(247, 99, 0, 0.08);
   z-index: 100;
   overflow: hidden;
 }
@@ -448,8 +451,8 @@ function iconFor(status: FrontdoorLog["status"]) {
   font-size: 0.62rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--vz-green);
-  border-bottom: 1px solid var(--vz-green-dim);
+  color: var(--vz-orange);
+  border-bottom: 1px solid var(--vz-orange-dim);
   margin-bottom: 0.2rem;
 }
 
@@ -477,20 +480,22 @@ function iconFor(status: FrontdoorLog["status"]) {
   font-family: var(--vz-font-sans);
 }
 .vz-te-menu-item:hover {
-  background: var(--vz-green-dim);
-  color: var(--vz-green);
-  border-left-color: var(--vz-green);
+  background: var(--vz-orange);
+  color: #fff;
+  border-left-color: var(--vz-orange);
 }
 
 .vz-te-org-icon {
   flex-shrink: 0;
-  color: var(--vz-green);
+  color: var(--vz-orange);
   opacity: 0.4;
   transition:
     opacity 0.12s,
+    color 0.12s,
     transform 0.12s;
 }
 .vz-te-menu-item:hover .vz-te-org-icon {
+  color: #fff;
   opacity: 1;
   transform: scale(1.1);
 }
@@ -553,8 +558,8 @@ function iconFor(status: FrontdoorLog["status"]) {
     background 0.15s;
 }
 .sf-modal__close:hover {
-  color: rgba(255, 255, 255, 0.8);
-  background: rgba(255, 255, 255, 0.07);
+  color: #f76300;
+  background: rgba(247,99,0,0.14);
 }
 
 .sf-modal__body {
@@ -630,19 +635,20 @@ function iconFor(status: FrontdoorLog["status"]) {
 }
 
 .sf-btn-open {
-  background: #3b82f6;
-  color: #fff;
-  border: none;
+  background: transparent;
+  color: var(--vz-orange);
+  border: 1px solid var(--vz-orange);
   border-radius: 6px;
   padding: 0.45rem 1.1rem;
   font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
   font-family: inherit;
-  transition: background 0.15s;
+  transition: background 0.15s, color 0.15s;
 }
 .sf-btn-open:hover {
-  background: #2563eb;
+  background: var(--vz-orange);
+  color: #fff;
 }
 
 /* Modal enter/leave */

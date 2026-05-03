@@ -1075,8 +1075,8 @@ onMounted(load);
     border-color 0.15s;
 }
 .vz-dash__refresh:hover {
-  color: var(--vz-text);
-  border-color: var(--vz-border2);
+  color: var(--vz-orange);
+  border-color: var(--vz-orange);
 }
 
 /* ── Two-column layout ── */
@@ -1121,12 +1121,12 @@ onMounted(load);
     color 0.12s;
 }
 .vz-dash__navitem:hover {
-  background: var(--vz-surface);
-  color: var(--vz-text);
+  background: var(--vz-orange-dim);
+  color: var(--vz-orange);
 }
 .vz-dash__navitem--active {
-  background: var(--vz-surface2);
-  color: var(--vz-text);
+  background: var(--vz-orange-dim);
+  color: var(--vz-orange);
   font-weight: 500;
 }
 

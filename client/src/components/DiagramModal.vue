@@ -94,8 +94,8 @@ defineEmits<{ close: [] }>();
     background 0.15s;
 }
 .dm-close:hover {
-  color: var(--vz-text);
-  background: var(--vz-surface2);
+  color: var(--vz-orange);
+  background: var(--vz-orange-dim);
 }
 
 .dm-body {

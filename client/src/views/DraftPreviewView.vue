@@ -228,25 +228,26 @@ async function handleLogout() {
 }
 
 .vz-draft-banner__back:hover {
-  color: var(--vz-text);
-  border-color: var(--vz-border2);
+  color: var(--vz-orange);
+  border-color: var(--vz-orange);
 }
 
 .vz-draft-banner__publish {
-  background: #f59e0b;
-  color: #000;
-  border: none;
+  background: transparent;
+  color: var(--vz-orange);
+  border: 1px solid var(--vz-orange);
   border-radius: var(--vz-radius-sm);
   padding: 0.4rem 1rem;
   font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
-  transition: opacity 0.15s;
+  transition: background 0.15s, color 0.15s;
   white-space: nowrap;
 }
 
 .vz-draft-banner__publish:hover:not(:disabled) {
-  opacity: 0.85;
+  background: var(--vz-orange);
+  color: #fff;
 }
 
 .vz-draft-banner__publish:disabled {

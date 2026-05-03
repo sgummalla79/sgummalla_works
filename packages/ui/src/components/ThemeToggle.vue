@@ -73,8 +73,8 @@ defineEmits<{ toggle: [] }>();
 }
 
 .vz-theme-toggle:hover {
-  color: var(--vz-text);
-  border-color: var(--vz-text2);
-  background: var(--vz-surface);
+  color: var(--vz-orange);
+  border-color: var(--vz-orange);
+  background: var(--vz-orange-dim);
 }
 </style>

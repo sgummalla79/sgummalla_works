@@ -67,7 +67,7 @@ defineProps<{
   left: 0.75rem;
   right: 0.75rem;
   height: 1.5px;
-  background: var(--vz-text);
+  background: var(--vz-orange);
   transform: scaleX(0);
   transform-origin: left;
   transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
@@ -75,7 +75,7 @@ defineProps<{
 
 .vz-nav-group:hover .vz-nav-group__trigger,
 .vz-nav-group__trigger--active {
-  color: var(--vz-text);
+  color: var(--vz-orange);
 }
 
 .vz-nav-group:hover .vz-nav-group__trigger::after,
@@ -135,7 +135,7 @@ defineProps<{
 
 .vz-nav-group__dropdown :deep(.vz-nav-link:hover),
 .vz-nav-group__dropdown :deep(.vz-nav-link--active) {
-  background: var(--vz-surface);
-  color: var(--vz-text);
+  background: var(--vz-orange);
+  color: #fff;
 }
 </style>

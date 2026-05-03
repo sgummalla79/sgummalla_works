@@ -137,7 +137,7 @@ async function handleLogout() {
 }
 
 .vz-article-back:hover {
-  color: var(--vz-text);
+  color: var(--vz-orange);
 }
 
 .vz-article-disclaimer {

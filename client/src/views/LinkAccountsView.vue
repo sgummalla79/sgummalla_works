@@ -187,20 +187,21 @@ onMounted(async () => {
   justify-content: center;
   width: 100%;
   padding: 0.65rem 1rem;
-  background: var(--vz-text);
-  color: var(--vz-bg);
-  border: 1px solid var(--vz-text);
+  background: transparent;
+  color: var(--vz-orange);
+  border: 1px solid var(--vz-orange);
   border-radius: var(--vz-radius-md);
   font-family: var(--vz-font-sans);
   font-size: 0.9rem;
   font-weight: 500;
   text-decoration: none;
-  transition: opacity 0.15s;
+  transition: background 0.15s, color 0.15s;
   box-sizing: border-box;
 }
 
 .vz-link__btn-primary:hover {
-  opacity: 0.85;
+  background: var(--vz-orange);
+  color: #fff;
 }
 
 .vz-link__btn-ghost {
@@ -223,8 +224,8 @@ onMounted(async () => {
 }
 
 .vz-link__btn-ghost:hover {
-  color: var(--vz-text);
-  border-color: var(--vz-border2);
+  color: var(--vz-orange);
+  border-color: var(--vz-orange);
 }
 
 .vz-link__note {

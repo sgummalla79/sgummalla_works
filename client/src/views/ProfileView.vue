@@ -585,7 +585,7 @@ async function handleLogout() {
 }
 
 .vz-token__claim--expandable:hover {
-  background: var(--vz-surface);
+  background: var(--vz-orange-dim);
 }
 
 .vz-token__claim--open {

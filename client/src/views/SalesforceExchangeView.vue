@@ -362,7 +362,7 @@ onMounted(loadClients);
             no Salesforce username or password required.
           </p>
         </div>
-        <Button variant="ghost" @click="openRegisterFlyout">+ Register</Button>
+        <Button variant="primary" @click="openRegisterFlyout">+ Register</Button>
       </div>
 
       <p v-if="loadError" class="sf-msg sf-msg--err">{{ loadError }}</p>
@@ -513,7 +513,7 @@ onMounted(loadClients);
                               </td>
                               <td class="sf-utd sf-utd--action">
                                 <Button
-                                  variant="ghost"
+                                  variant="primary"
                                   :loading="!!row.refreshing"
                                   @click="handleRefreshToken(c.id, row)"
                                 >
@@ -581,7 +581,7 @@ onMounted(loadClients);
                         >
                         <span class="sf-new-user__email">{{ auth.email }}</span>
                         <Button
-                          variant="ghost"
+                          variant="primary"
                           :loading="gettingToken[c.id]"
                           @click="handleGetToken(c)"
                         >
@@ -671,7 +671,7 @@ onMounted(loadClients);
         </div>
         <div class="sf-flyout__footer">
           <Button
-            variant="ghost"
+            variant="primary"
             :loading="flyoutSaving"
             @click="handleFlyoutSubmit"
           >
@@ -739,7 +739,7 @@ onMounted(loadClients);
         />
         <div class="sf-cli__run-col">
           <Button
-            variant="ghost"
+            variant="primary"
             :loading="cliRunning"
             :disabled="!cliSoql.trim()"
             @click="runQuery"
@@ -872,9 +872,9 @@ onMounted(loadClients);
   margin-top: 2px;
 }
 .sf-diagram-btn:hover {
-  color: var(--vz-text);
-  border-color: var(--vz-text2);
-  background: var(--vz-surface2);
+  color: var(--vz-orange);
+  border-color: var(--vz-orange);
+  background: var(--vz-orange-dim);
 }
 .sf-page__sub {
   font-size: 0.92rem;
@@ -1032,8 +1032,8 @@ onMounted(loadClients);
   font-weight: 600;
 }
 .sf-status--active {
-  background: color-mix(in srgb, var(--vz-green) 14%, transparent);
-  color: var(--vz-green);
+  background: color-mix(in srgb, var(--vz-orange) 14%, transparent);
+  color: var(--vz-orange);
 }
 .sf-status--expired {
   background: color-mix(in srgb, var(--vz-text3) 14%, transparent);
@@ -1079,8 +1079,8 @@ onMounted(loadClients);
   flex-shrink: 0;
 }
 .sf-icon-btn:hover {
-  color: var(--vz-text);
-  background: var(--vz-surface);
+  color: var(--vz-orange);
+  background: var(--vz-orange-dim);
 }
 .sf-icon-btn--danger:hover {
   color: var(--vz-red);
@@ -1264,7 +1264,7 @@ onMounted(loadClients);
   transition: color 0.15s;
 }
 .sf-cli__close:hover {
-  color: rgba(255, 255, 255, 0.8);
+  color: #f76300;
 }
 .sf-cli__editor {
   display: flex;

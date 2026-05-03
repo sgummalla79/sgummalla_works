@@ -355,14 +355,14 @@ import { AppLayout } from "@sgw/ui";
   font-size: clamp(0.62rem, 0.7vw, 0.72rem);
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--vz-green);
+  color: var(--vz-orange);
 }
 
 .sgw-eyebrow__dot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--vz-green);
+  background: var(--vz-orange);
   flex-shrink: 0;
   animation: sgw-pulse 2.5s ease-in-out infinite;
 }
@@ -388,7 +388,7 @@ import { AppLayout } from "@sgw/ui";
 }
 
 .sgw-headline--accent {
-  color: var(--vz-green);
+  color: var(--vz-orange);
 }
 
 .sgw-hero__body {
@@ -402,7 +402,7 @@ import { AppLayout } from "@sgw/ui";
 
 /* ── Quote ────────────────────────────────────────────────────────── */
 .sgw-hero__quote {
-  border-left: 2px solid var(--vz-green);
+  border-left: 2px solid var(--vz-orange);
   padding: clamp(0.6rem, 1vh, 0.85rem) clamp(0.75rem, 1.2vw, 1rem);
   margin: 0;
   display: flex;
@@ -431,7 +431,7 @@ import { AppLayout } from "@sgw/ui";
 }
 
 .sgw-hero__quote-dash {
-  color: var(--vz-green);
+  color: var(--vz-orange);
 }
 
 /* ── Abstract SVG ─────────────────────────────────────────────────── */
@@ -459,7 +459,7 @@ import { AppLayout } from "@sgw/ui";
 }
 .sgw-hub-pulse {
   fill: none;
-  stroke: var(--vz-green);
+  stroke: var(--vz-orange);
   stroke-width: 1;
   stroke-opacity: 0;
   animation: sgw-ring-pulse 4s ease-out infinite;

@@ -21,6 +21,8 @@ export const defaultTheme: SgwTheme = {
     red: "#FF6B6B",
     redDim: "rgba(255,107,107,0.12)",
     amber: "#FFC043",
+    orange: "#F76300",
+    orangeDim: "rgba(247,99,0,0.14)",
     symbolColor: "rgba(255,255,255,0.10)",
   },
   font: {
@@ -59,6 +61,8 @@ export const lightTheme: SgwTheme = {
     red: "#B83232",
     redDim: "rgba(184,50,50,0.08)",
     amber: "#92600A",
+    orange: "#C44D00",
+    orangeDim: "rgba(196,77,0,0.10)",
     symbolColor: "rgba(0,0,0,0.15)",
   },
   font: {

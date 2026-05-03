@@ -93,7 +93,7 @@ async function handleLogin() {
           <Button
             v-for="conn in connections"
             :key="conn.name"
-            variant="ghost"
+            variant="primary"
             :full-width="true"
             @click="initiateAuth0(conn.name)"
           >
@@ -133,7 +133,7 @@ async function handleLogin() {
         </template>
         <Button
           v-else
-          variant="ghost"
+          variant="primary"
           :full-width="true"
           @click="initiateAuth0()"
         >

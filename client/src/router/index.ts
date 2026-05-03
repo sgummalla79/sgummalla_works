@@ -31,13 +31,13 @@ const routes: RouteRecordRaw[] = [
     meta: { requiresAuth: true, ownerOnly: true },
   },
   {
-    path: "/salesforce",
+    path: "/salesforce/jwtbearer",
     name: "salesforce",
     component: () => import("../views/SalesforceView.vue"),
     meta: { requiresAuth: true },
   },
   {
-    path: "/salesforce-exchange",
+    path: "/salesforce/token-exchange",
     name: "salesforce-exchange",
     component: () => import("../views/SalesforceExchangeView.vue"),
     meta: { requiresAuth: true },

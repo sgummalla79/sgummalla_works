@@ -39,14 +39,14 @@ defineProps<{
   left: 0.75rem;
   right: 0.75rem;
   height: 1.5px;
-  background: var(--vz-text);
+  background: var(--vz-orange);
   transform: scaleX(0);
   transform-origin: left;
   transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .vz-nav-link:hover {
-  color: var(--vz-text);
+  color: var(--vz-orange);
 }
 
 .vz-nav-link:hover::after,
@@ -55,6 +55,6 @@ defineProps<{
 }
 
 .vz-nav-link--active {
-  color: var(--vz-text);
+  color: var(--vz-orange);
 }
 </style>

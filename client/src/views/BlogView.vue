@@ -256,8 +256,8 @@ async function handleLogout() {
 }
 
 .vz-blog__more-btn:hover {
-  color: var(--vz-text);
-  border-color: var(--vz-border2);
+  color: var(--vz-orange);
+  border-color: var(--vz-orange);
 }
 
 /* ── Footer ─────────────────────────────────────────── */

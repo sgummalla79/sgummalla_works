@@ -954,8 +954,8 @@ function download(content: string, filename: string) {
 }
 
 .sf-setup-close:hover {
-  color: var(--vz-text);
-  background: var(--vz-surface2);
+  color: var(--vz-orange);
+  background: var(--vz-orange-dim);
 }
 
 /* ── Body ── */
@@ -1045,21 +1045,22 @@ function download(content: string, filename: string) {
   font-family: var(--vz-font-mono);
   font-size: 0.95rem;
   letter-spacing: 0.05em;
-  color: var(--vz-text);
-  background: var(--vz-surface2);
-  border: 1px solid var(--vz-border2);
+  color: var(--vz-orange);
+  background: transparent;
+  border: 1px solid var(--vz-orange);
   border-radius: var(--vz-radius-md);
   padding: 0.45rem 0.875rem;
   cursor: pointer;
   white-space: nowrap;
   transition:
     background 0.15s,
+    color 0.15s,
     border-color 0.15s;
 }
 
 .sf-cert-box__btn:hover:not(:disabled) {
-  background: var(--vz-bg);
-  border-color: var(--vz-text3);
+  background: var(--vz-orange);
+  color: #fff;
 }
 
 .sf-cert-box__btn:disabled {
@@ -1094,28 +1095,29 @@ function download(content: string, filename: string) {
   padding: 0.35rem 0.75rem;
   cursor: pointer;
   border: 1px solid;
-  transition: opacity 0.15s;
+  transition: background 0.15s, color 0.15s;
 }
 
 .sf-cert-dl:hover {
-  opacity: 0.8;
+  background: var(--vz-orange);
+  color: #fff;
 }
 
 .sf-cert-dl--key {
-  color: var(--vz-green);
-  background: rgba(74, 222, 128, 0.08);
-  border-color: var(--vz-green);
+  color: var(--vz-orange);
+  background: transparent;
+  border-color: var(--vz-orange);
 }
 
 .sf-cert-dl--cert {
-  color: #60a5fa;
-  background: rgba(96, 165, 250, 0.08);
-  border-color: #60a5fa;
+  color: var(--vz-orange);
+  background: transparent;
+  border-color: var(--vz-orange);
 }
 
 .sf-cert-box__note {
   font-size: 0.975rem;
-  color: var(--vz-green);
+  color: var(--vz-orange);
   line-height: 1.5;
 }
 
@@ -1259,7 +1261,7 @@ function download(content: string, filename: string) {
   display: block;
   font-family: var(--vz-font-mono);
   font-size: 0.95rem;
-  color: var(--vz-green);
+  color: var(--vz-orange);
   white-space: pre-wrap;
   word-break: break-word;
   line-height: 1.65;
@@ -1306,8 +1308,8 @@ function download(content: string, filename: string) {
 }
 
 .sf-setup-footer__cancel:hover {
-  color: var(--vz-text);
-  border-color: var(--vz-border2);
+  color: var(--vz-orange);
+  border-color: var(--vz-orange);
 }
 
 .sf-setup-footer__register {
@@ -1317,17 +1319,18 @@ function download(content: string, filename: string) {
   font-family: var(--vz-font-sans);
   font-size: 0.95rem;
   font-weight: 500;
-  color: var(--vz-bg);
-  background: var(--vz-text);
-  border: 1px solid var(--vz-text);
+  color: var(--vz-orange);
+  background: transparent;
+  border: 1px solid var(--vz-orange);
   border-radius: var(--vz-radius-md);
   padding: 0.45rem 0.875rem;
   cursor: pointer;
-  transition: opacity 0.15s;
+  transition: background 0.15s, color 0.15s;
 }
 
 .sf-setup-footer__register:hover {
-  opacity: 0.85;
+  background: var(--vz-orange);
+  color: #fff;
 }
 
 /* ── Transition ── */
