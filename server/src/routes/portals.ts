@@ -55,7 +55,7 @@ router.get("/", async (req: Request, res: Response) => {
   if (exchangeClients.length > 0) {
     allPortals.push({
       id: "sf-token-exchange-login",
-      name: "Token Exchange Login",
+      name: "Token Exchange",
       protocol: "token-exchange",
       description:
         "Exchange your web session for a Salesforce user session using OAuth 2.0 Token Exchange",
