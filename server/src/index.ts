@@ -17,6 +17,7 @@ import salesforceExchangeRouter from "./routes/salesforceExchange.js";
 import { ensureTables } from "./lib/ensureTables.js";
 import { requestLogger } from "./middleware/requestLogger.js";
 import usageRouter from "./routes/usage.js";
+import profileRouter from "./routes/profile.js";
 import { appLogger } from "./lib/logger.js";
 import { ConsoleSink } from "./lib/sinks/console.js";
 import { FileSink } from "./lib/sinks/file.js";
@@ -47,6 +48,7 @@ app.use(requestLogger);
 // ── API routes ────────────────────────────────────────────────────────────────
 app.use("/api", healthRouter);
 app.use("/api/usage", usageRouter);
+app.use("/api/profile", profileRouter);
 app.use("/api/auth", authRouter);
 app.use("/api/auth0", auth0Router);
 app.use("/api/saml", samlRouter);

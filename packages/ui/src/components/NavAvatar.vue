@@ -9,14 +9,29 @@ const props = defineProps<{
   isOwner?: boolean;
 }>();
 
-defineEmits<{
+const emit = defineEmits<{
   profile: [];
   configuration: [];
   "article-drafts": [];
   usage: [];
   logout: [];
   "toggle-theme": [];
+  "theme-color": [color: string];
 }>();
+
+const THEME_COLORS = [
+  { label: "Ember",     value: "#F76300" },
+  { label: "Ocean",     value: "#00A1E0" },
+  { label: "Violet",    value: "#8B5CF6" },
+  { label: "Emerald",   value: "#10B981" },
+  { label: "Rose",      value: "#F43F5E" },
+  { label: "Slate",     value: "#94A3B8" },
+];
+
+function selectColor(color: string) {
+  open.value = false;
+  emit("theme-color", color);
+}
 
 const open = ref(false);
 const containerRef = ref<HTMLElement | null>(null);
@@ -159,6 +174,36 @@ onUnmounted(() =>
           </button>
         </template>
 
+        <!-- Theme color picker -->
+        <div class="vz-avatar-color-wrap">
+          <button class="vz-avatar-item vz-avatar-item--color">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/>
+              <circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/>
+              <circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/>
+              <circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/>
+              <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/>
+            </svg>
+            Theme Color
+            <span class="vz-avatar-item__spacer" />
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+          </button>
+          <div class="vz-avatar-color-panel">
+            <div class="vz-avatar-color-inner">
+              <button
+                v-for="c in THEME_COLORS"
+                :key="c.value"
+                class="vz-color-swatch"
+                :title="c.label"
+                :style="{ background: c.value }"
+                @click.stop="selectColor(c.value)"
+              />
+            </div>
+          </div>
+        </div>
+
         <!-- Theme toggle — always shown -->
         <button
           v-if="themeMode !== undefined"
@@ -244,7 +289,7 @@ onUnmounted(() =>
         <template v-if="!isGuest">
           <div class="vz-avatar-divider" />
           <button
-            class="vz-avatar-item vz-avatar-item--danger"
+            class="vz-avatar-item"
             @click="
               () => {
                 open = false;
@@ -426,6 +471,59 @@ onUnmounted(() =>
   background: rgba(255, 255, 255, 0.15);
   border-color: rgba(255, 255, 255, 0.3);
   color: #fff;
+}
+
+/* ── Theme color picker ── */
+.vz-avatar-color-wrap {
+  position: relative;
+}
+
+.vz-avatar-item--color {
+  width: 100%;
+}
+
+.vz-avatar-item__spacer {
+  flex: 1;
+}
+
+.vz-avatar-color-panel {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.2s ease;
+  background: var(--vz-surface);
+  border-top: 0px solid var(--vz-border);
+}
+
+.vz-avatar-color-wrap:hover .vz-avatar-color-panel {
+  max-height: 56px;
+  border-top-width: 1px;
+}
+
+.vz-avatar-color-inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  padding: 0.6rem 1rem;
+}
+
+.vz-color-swatch {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  flex-shrink: 0;
+  padding: 0;
+  transition:
+    transform 0.15s,
+    box-shadow 0.15s;
+  outline: none;
+}
+
+.vz-color-swatch:hover {
+  transform: scale(1.25);
+  box-shadow: 0 0 0 2px var(--vz-bg2), 0 0 0 4px rgba(255, 255, 255, 0.4);
 }
 
 /* Transition */

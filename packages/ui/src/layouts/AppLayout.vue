@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, nextTick, onMounted, inject } from "vue";
 import { useRouter } from "vue-router";
 import { useTheme } from "../theme/plugin";
 import { defaultTheme, lightTheme } from "../theme/default";
@@ -9,13 +9,18 @@ import NavGroup from "../components/NavGroup.vue";
 import NavAvatar from "../components/NavAvatar.vue";
 import NavLogo from "../components/NavLogo.vue";
 import SymbolLayer from "../components/SymbolLayer.vue";
+import lightbulbRaw from "../assets/lightbulb.svg?raw";
 
 // ── Nav tiers — single source of truth ───────────────────────────────────────
 // Add / remove items here only. No view should build its own nav list.
 
 const DEMOS_NAV = [
   { name: "auths", label: "Integrations", href: "/auths" },
-  { name: "salesforce", label: "JWT Bearer Auth", href: "/salesforce/jwtbearer" },
+  {
+    name: "salesforce",
+    label: "JWT Bearer Auth",
+    href: "/salesforce/jwtbearer",
+  },
   {
     name: "salesforce-exchange",
     label: "Token Exchange Auth",
@@ -69,12 +74,82 @@ const THEME_STORAGE_KEY = "sgw-theme-mode";
 const themeMode = ref<"dark" | "light">(
   (localStorage.getItem(THEME_STORAGE_KEY) as "dark" | "light") ?? "dark",
 );
-setTheme(themeMode.value === "light" ? lightTheme : defaultTheme);
+
+const ACCENT_COOKIE = "sgw-accent-color";
+
+function setCookie(value: string) {
+  const exp = new Date(Date.now() + 365 * 864e5).toUTCString();
+  document.cookie = `${ACCENT_COOKIE}=${encodeURIComponent(value)};expires=${exp};path=/;SameSite=Lax`;
+}
+
+function getCookie(): string | null {
+  const m = document.cookie.match(
+    new RegExp("(?:^|; )" + ACCENT_COOKIE + "=([^;]*)"),
+  );
+  return m ? decodeURIComponent(m[1]) : null;
+}
+
+const loadAccentColor = inject<() => Promise<string | null>>(
+  "loadAccentColor",
+  async () => null,
+);
+const saveAccentColor = inject<(color: string) => Promise<void>>(
+  "saveAccentColor",
+  async () => {},
+);
+
+function hexToRgba(hex: string, alpha: number): string {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+function updateFavicon(color: string) {
+  const svg = lightbulbRaw.replace('fill="currentColor"', `fill="${color}"`);
+  const link = document.querySelector(
+    'link[type="image/svg+xml"]',
+  ) as HTMLLinkElement | null;
+  if (link) link.href = `data:image/svg+xml,${encodeURIComponent(svg)}`;
+}
+
+function applyAccentColor(color: string) {
+  document.documentElement.style.setProperty("--vz-orange", color);
+  document.documentElement.style.setProperty(
+    "--vz-orange-dim",
+    hexToRgba(color, 0.14),
+  );
+  updateFavicon(color);
+}
+
+async function applyTheme(mode: "dark" | "light") {
+  const theme = mode === "light" ? lightTheme : defaultTheme;
+  setTheme(theme);
+  await nextTick();
+  const saved = getCookie();
+  applyAccentColor(saved ?? theme.colors.orange);
+}
+
+applyTheme(themeMode.value);
+
+onMounted(async () => {
+  const serverColor = await loadAccentColor();
+  if (serverColor) {
+    setCookie(serverColor);
+    applyAccentColor(serverColor);
+  }
+});
 
 function toggleTheme() {
   themeMode.value = themeMode.value === "dark" ? "light" : "dark";
   localStorage.setItem(THEME_STORAGE_KEY, themeMode.value);
-  setTheme(themeMode.value === "light" ? lightTheme : defaultTheme);
+  applyTheme(themeMode.value);
+}
+
+async function handleThemeColor(color: string) {
+  setCookie(color);
+  applyAccentColor(color);
+  await saveAccentColor(color);
 }
 </script>
 
@@ -135,7 +210,10 @@ function toggleTheme() {
             </svg>
             Integrations
           </NavLink>
-          <NavLink href="/salesforce/jwtbearer" :active="activePage === 'salesforce'">
+          <NavLink
+            href="/salesforce/jwtbearer"
+            :active="activePage === 'salesforce'"
+          >
             <svg
               width="14"
               height="14"
@@ -229,6 +307,7 @@ function toggleTheme() {
           @article-drafts="handleArticleDrafts"
           @logout="emit('logout')"
           @toggle-theme="toggleTheme"
+          @theme-color="handleThemeColor"
           @usage="emit('usage')"
         />
       </template>
@@ -262,7 +341,6 @@ function toggleTheme() {
   justify-content: center;
   gap: 0.1rem;
 }
-
 
 .vz-nav-signin {
   display: inline-flex;

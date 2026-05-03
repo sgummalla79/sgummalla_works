@@ -73,4 +73,14 @@ export async function ensureTables(): Promise<void> {
       )
     `;
   }
+
+  if (!(await tableExists("user_profiles"))) {
+    await sql`
+      CREATE TABLE user_profiles (
+        user_id      text        PRIMARY KEY,
+        accent_color text,
+        updated_at   timestamptz NOT NULL DEFAULT now()
+      )
+    `;
+  }
 }
