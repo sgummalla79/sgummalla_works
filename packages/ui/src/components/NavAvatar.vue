@@ -25,7 +25,7 @@ const THEME_COLORS = [
   { label: "Violet", value: "#8B5CF6" },
   { label: "Emerald", value: "#10B981" },
   { label: "Rose", value: "#F43F5E" },
-  { label: "Slate", value: "#94A3B8" },
+  { label: "Slate", value: "#475569" },
 ];
 
 function selectColor(color: string) {
@@ -520,7 +520,7 @@ onUnmounted(() =>
 .vz-avatar-color-panel {
   max-height: 0;
   overflow: hidden;
-  transition: max-height 0.2s ease;
+  transition: max-height 0.65s ease;
   background: var(--vz-surface);
   border-top: 0px solid var(--vz-border);
 }
