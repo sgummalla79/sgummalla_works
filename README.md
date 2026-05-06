@@ -23,12 +23,15 @@ A modern, full-stack built with Vue 3, TypeScript, Express, and a portable share
 
 ```
 sgummalla-works/
-├── packages/
-│   └── ui/          → @sgw/ui  — shared component + theme library
-├── client/          → @sgw/client — Vue frontend
-├── server/          → @sgw/server — Express API
-├── pnpm-workspace.yaml
-└── package.json
+├── vue-app/                    → full web application
+│   ├── packages/
+│   │   └── ui/          → @sgw/ui  — shared component + theme library
+│   ├── client/          → @sgw/client — Vue frontend
+│   ├── server/          → @sgw/server — Express API
+│   ├── pnpm-workspace.yaml
+│   └── package.json
+├── salesforce/                 → Salesforce metadata & scripts
+└── docs/                       → project documentation
 ```
 
 ---
@@ -37,7 +40,7 @@ sgummalla-works/
 
 ```bash
 # Install all dependencies
-pnpm install
+cd vue-app && pnpm install
 
 # Run frontend + backend in parallel
 pnpm dev
@@ -54,19 +57,19 @@ pnpm build
 
 Shared UI component library. Fully portable — can be published to npm independently.
 Theme injection via `ThemeProvider.vue` using CSS custom properties.
-See [`packages/ui/README.md`](./packages/ui/README.md).
+See [`vue-app/packages/ui/README.md`](./vue-app/packages/ui/README.md).
 
 ### `@sgw/client`
 
 Vue 3 frontend application. Consumes `@sgw/ui` for all UI components.
 Communicates with `@sgw/server` via Axios with `credentials: include`.
-See [`client/README.md`](./client/README.md).
+See [`vue-app/client/README.md`](./vue-app/client/README.md).
 
 ### `@sgw/server`
 
 Express API server. Stateless JWT auth via httpOnly cookies.
 Handles credentials, Auth0, SAML 2.0, and OIDC.
-See [`server/README.md`](./server/README.md).
+See [`vue-app/server/README.md`](./vue-app/server/README.md).
 
 ---
 
@@ -187,8 +190,8 @@ to project knowledge so the next chat has full context:
 | 5            | `server/package.json`, `server/src/index.ts`, `jwt.ts`, `requireAuth.ts` |
 | 6            | `routes/auth.ts`                                                         |
 | 7            | All `routes/*.ts` files                                                  |
-| 8            | `client/package.json`, `vite.config.ts`, `App.vue`, `router/index.ts`    |
-| 9            | `stores/auth.ts`, `api/client.ts`, `api/auth.ts`                         |
+| 8            | `vue-app/client/package.json`, `vite.config.ts`, `App.vue`, `router/index.ts` |
+| 9            | `stores/auth.ts`, `api/client.ts`, `api/auth.ts`                              |
 | 10           | All `views/*.vue` files                                                  |
 
 ---
@@ -222,7 +225,7 @@ OIDC_CLIENT_SECRET=
 OIDC_ISSUER=
 ```
 
-### Client (`client/.env`)
+### Client (`vue-app/client/.env`)
 
 ```env
 VITE_API_URL=http://localhost:3000

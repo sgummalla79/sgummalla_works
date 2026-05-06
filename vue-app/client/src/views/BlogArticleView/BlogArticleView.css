@@ -1,0 +1,47 @@
+.vz-article-wrapper {
+  width: 100%;
+  max-width: 1180px;
+  animation: vz-rise 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes vz-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.vz-article-nav {
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.vz-article-date {
+  font-family: var(--vz-font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  color: var(--vz-text3);
+}
+
+.vz-article-back {
+  background: none;
+  border: none;
+  font-family: var(--vz-font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  color: var(--vz-text3);
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.15s;
+}
+
+.vz-article-back:hover {
+  color: var(--vz-orange);
+}

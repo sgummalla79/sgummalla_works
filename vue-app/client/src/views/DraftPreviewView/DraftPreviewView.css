@@ -1,0 +1,132 @@
+.vz-draft-page {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 1180px;
+  gap: 1.5rem;
+}
+
+.vz-draft-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 1.5rem;
+  background: rgba(245, 158, 11, 0.1);
+  border-bottom: 1px solid rgba(245, 158, 11, 0.3);
+  flex-wrap: wrap;
+}
+
+.vz-draft-publish-bottom {
+  margin-top: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.vz-draft-banner__left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.vz-draft-banner__badge {
+  font-family: var(--vz-font-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.55rem;
+  border-radius: var(--vz-radius-sm);
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  white-space: nowrap;
+}
+
+.vz-draft-banner__msg {
+  font-size: 0.8rem;
+  color: var(--vz-text2);
+}
+
+.vz-draft-banner__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+.vz-draft-banner__back {
+  background: none;
+  border: 1px solid var(--vz-border);
+  border-radius: var(--vz-radius-sm);
+  padding: 0.4rem 0.9rem;
+  font-size: 0.8rem;
+  color: var(--vz-text2);
+  cursor: pointer;
+  transition:
+    color 0.15s,
+    border-color 0.15s;
+}
+
+.vz-draft-banner__back:hover {
+  color: var(--vz-orange);
+  border-color: var(--vz-orange);
+}
+
+.vz-draft-banner__publish {
+  background: transparent;
+  color: var(--vz-orange);
+  border: 1px solid var(--vz-orange);
+  border-radius: var(--vz-radius-sm);
+  padding: 0.4rem 1rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    color 0.15s;
+  white-space: nowrap;
+}
+
+.vz-draft-banner__publish:hover:not(:disabled) {
+  background: var(--vz-orange);
+  color: #fff;
+}
+
+.vz-draft-banner__publish:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.vz-article-wrapper {
+  width: 100%;
+  animation: vz-rise 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes vz-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.vz-article-nav {
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.vz-article-date {
+  font-family: var(--vz-font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  color: var(--vz-text3);
+}

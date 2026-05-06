@@ -1,1 +1,1 @@
-secrets/** filter=git-crypt diff=git-crypt
+vue-app/secrets/** filter=git-crypt diff=git-crypt

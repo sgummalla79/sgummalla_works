@@ -1,0 +1,381 @@
+.vz-auths {
+  width: 100%;
+  max-width: 720px;
+  animation: vz-rise 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+  padding-bottom: 2rem;
+}
+
+@keyframes vz-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.vz-auths__section-header {
+  margin-bottom: 1.5rem;
+}
+
+.vz-auths__title {
+  font-size: 2rem;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  color: var(--vz-text);
+  margin-bottom: 0.4rem;
+  line-height: 1;
+}
+
+.vz-auths__sub {
+  font-size: 0.92rem;
+  color: var(--vz-text2);
+  line-height: 1.6;
+}
+
+.vz-auths__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.vz-auths__grid :deep(.vz-auth-card) {
+  border: 1px solid var(--vz-border);
+  border-radius: var(--vz-radius-md);
+  padding: 1.25rem 1.5rem;
+  gap: 0.6rem;
+  aspect-ratio: 1 / 1.2;
+  overflow: hidden;
+}
+
+.vz-auths__grid :deep(.vz-auth-card__title) {
+  font-size: 1.05rem;
+}
+
+.vz-auths__grid :deep(.vz-auth-card__desc) {
+  font-size: 0.9rem;
+  line-height: 1.55;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+/* Pin action row to a fixed height so all tiles align at the bottom */
+.vz-auths__grid :deep(.vz-auth-card__action) {
+  margin-top: auto;
+  padding-top: 0.75rem;
+  min-height: 2.25rem;
+  display: flex;
+  align-items: center;
+}
+
+/* Disabled tiles */
+.vz-auths__grid :deep(.vz-auth-card.vz-auth-card--disabled) {
+  opacity: 0.45;
+  pointer-events: none;
+  user-select: none;
+}
+
+.vz-coming-soon {
+  font-family: var(--vz-font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--vz-text3);
+  display: flex;
+  align-items: center;
+  height: 2rem; /* matches button height so action rows are visually equal */
+}
+
+/* Token Exchange dropdown button */
+.vz-te-wrap {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.vz-te-dropdown {
+  position: relative;
+  width: 100%;
+}
+
+.vz-te-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  width: 100%;
+  padding: 0.32rem 0.75rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  font-family: var(--vz-font-sans);
+  color: var(--vz-orange);
+  background: transparent;
+  border: 1px solid var(--vz-orange);
+  border-radius: var(--vz-radius-sm);
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    color 0.15s;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: 0.01em;
+}
+.vz-te-btn:hover:not(:disabled) {
+  background: var(--vz-orange);
+  color: #fff;
+}
+.vz-te-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.vz-te-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  min-width: 100%;
+  max-width: 300px;
+  background: var(--vz-bg);
+  border: 1.5px solid var(--vz-orange);
+  border-radius: var(--vz-radius-md);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    0 0 16px rgba(247, 99, 0, 0.08);
+  z-index: 100;
+  overflow: hidden;
+}
+
+.vz-te-menu-header {
+  padding: 0.45rem 0.85rem 0.3rem;
+  font-family: var(--vz-font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--vz-orange);
+  border-bottom: 1px solid var(--vz-orange-dim);
+  margin-bottom: 0.2rem;
+}
+
+.vz-te-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  text-align: left;
+  padding: 0.6rem 0.85rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--vz-text);
+  background: none;
+  border: none;
+  border-left: 2px solid transparent;
+  cursor: pointer;
+  transition:
+    background 0.12s,
+    color 0.12s,
+    border-color 0.12s;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: var(--vz-font-sans);
+}
+.vz-te-menu-item:hover {
+  background: var(--vz-orange);
+  color: #fff;
+  border-left-color: var(--vz-orange);
+}
+
+.vz-te-org-icon {
+  flex-shrink: 0;
+  color: var(--vz-orange);
+  opacity: 0.4;
+  transition:
+    opacity 0.12s,
+    color 0.12s,
+    transform 0.12s;
+}
+.vz-te-menu-item:hover .vz-te-org-icon {
+  color: #fff;
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+@media (max-width: 680px) {
+  .vz-auths__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Log modal ──────────────────────────────────────────────────────────────── */
+
+.sf-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(4px);
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sf-modal {
+  background: #0b1120;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  width: 420px;
+  max-width: 94vw;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
+  overflow: hidden;
+  font-family: ui-monospace, "SF Mono", "Fira Code", monospace;
+}
+
+.sf-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.sf-modal__title {
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.sf-modal__close {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.3);
+  cursor: pointer;
+  font-size: 0.8rem;
+  padding: 0.15rem 0.3rem;
+  border-radius: 4px;
+  transition:
+    color 0.15s,
+    background 0.15s;
+}
+.sf-modal__close:hover {
+  color: #f76300;
+  background: rgba(247, 99, 0, 0.14);
+}
+
+.sf-modal__body {
+  padding: 1rem;
+  min-height: 80px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.sf-log-line {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.sf-log-icon {
+  flex-shrink: 0;
+  width: 14px;
+  text-align: center;
+  font-size: 0.75rem;
+}
+
+.sf-log-line--ok .sf-log-icon {
+  color: #4ade80;
+}
+.sf-log-line--ok {
+  color: rgba(255, 255, 255, 0.75);
+}
+.sf-log-line--cached .sf-log-icon {
+  color: #fbbf24;
+}
+.sf-log-line--cached {
+  color: rgba(255, 255, 255, 0.6);
+}
+.sf-log-line--info .sf-log-icon {
+  color: #60a5fa;
+}
+.sf-log-line--error .sf-log-icon {
+  color: #f87171;
+}
+.sf-log-line--error {
+  color: #f87171;
+}
+.sf-log-line--pending {
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.sf-spinner {
+  display: inline-block;
+  animation: sf-spin 1.2s linear infinite;
+  font-size: 0.8rem;
+  color: #60a5fa;
+}
+
+@keyframes sf-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.sf-modal__footer {
+  padding: 0.75rem 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.sf-btn-open {
+  background: transparent;
+  color: var(--vz-orange);
+  border: 1px solid var(--vz-orange);
+  border-radius: 6px;
+  padding: 0.45rem 1.1rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition:
+    background 0.15s,
+    color 0.15s;
+}
+.sf-btn-open:hover {
+  background: var(--vz-orange);
+  color: #fff;
+}
+
+/* Modal enter/leave */
+.sf-fade-enter-active,
+.sf-fade-leave-active {
+  transition: opacity 0.2s;
+}
+.sf-fade-enter-from,
+.sf-fade-leave-to {
+  opacity: 0;
+}
+
+/* Log line enter */
+.sf-line-enter-active {
+  transition:
+    opacity 0.18s,
+    transform 0.18s;
+}
+.sf-line-enter-from {
+  opacity: 0;
+  transform: translateX(-6px);
+}
