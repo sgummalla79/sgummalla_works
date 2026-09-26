@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from "vue";
+import { APEX_TOKEN_EXCHANGE_HANDLER_LINES } from "../data/apexTokenExchangeHandler";
 
 defineProps<{
   open: boolean;
@@ -200,8 +201,8 @@ function download(content: string, filename: string) {
 
           <!-- Body -->
           <div class="sf-setup-body">
-            <!-- ── Cert generator (shared) ─────────────────────────── -->
-            <div class="sf-cert-box">
+            <!-- ── Cert generator (JWT Bearer only — Token Exchange needs no certificate) ── -->
+            <div v-if="flow === 'jwt-bearer'" class="sf-cert-box">
               <div class="sf-cert-box__header">
                 <div>
                   <p class="sf-cert-box__title">Generate RSA Key Pair</p>
@@ -482,43 +483,46 @@ function download(content: string, filename: string) {
                   <span class="sf-setup-step__num">1</span>
                   <div>
                     <p class="sf-setup-step__title">
-                      Upload the Certificate to Salesforce
+                      Allow Salesforce to Fetch Auth0's Signing Keys
                     </p>
                     <p class="sf-setup-step__desc">
-                      Generate the key pair using the tool above, then upload
-                      the certificate to Salesforce so the Apex handler can
-                      validate incoming tokens:<br />
-                      Setup → <strong>Certificate and Key Management</strong> →
-                      <strong>Upload Certificate</strong>
+                      No certificate is uploaded. The Apex handler verifies each
+                      incoming Auth0 token against your tenant's public keys
+                      (JWKS), which Salesforce fetches itself, so Auth0 key
+                      rotation needs no change in Salesforce.<br />Setup →
+                      <strong>Remote Site Settings</strong> →
+                      <strong>New Remote Site</strong>
                     </p>
                     <table class="sf-setup-table">
                       <tbody>
                         <tr>
-                          <td>Certificate Label / API Name</td>
+                          <td>Remote Site Name</td>
+                          <td>
+                            <code class="sf-setup-inline">Auth0_JWKS</code>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td>Remote Site URL</td>
                           <td>
                             <code class="sf-setup-inline"
-                              >&lt;certificate_name&gt;</code
+                              >https://&lt;auth0_tenant_domain&gt;</code
                             >
                           </td>
                         </tr>
                         <tr>
-                          <td>File</td>
-                          <td>
-                            Upload
-                            <code class="sf-setup-inline">certificate.crt</code>
-                            downloaded above
-                          </td>
+                          <td>Active</td>
+                          <td>Checked</td>
                         </tr>
                       </tbody>
                     </table>
                     <p class="sf-setup-step__note">
-                      The API name you choose here must be used verbatim in the
+                      Check that
                       <code class="sf-setup-inline"
-                        >Auth.JWTUtil.validateJWTWithCert</code
+                        >https://&lt;auth0_tenant_domain&gt;/.well-known/jwks.json</code
                       >
-                      call in the Apex handler (Step 3). The Auth0 id_token must
-                      also be signed with the matching private key for
-                      validation to succeed.
+                      opens in a browser and shows a
+                      <code class="sf-setup-inline">keys</code> list. The
+                      handler (Step 3) calls it to validate the token signature.
                     </p>
                   </div>
                 </div>
@@ -549,7 +553,13 @@ function download(content: string, filename: string) {
                             <code class="sf-setup-inline"
                               >&lt;external_client_app_name&gt;</code
                             >
-                            — referenced in the Apex handler
+                            — the handler matches it against the
+                            <code class="sf-setup-inline"
+                              >appDeveloperName</code
+                            >
+                            in the token's
+                            <code class="sf-setup-inline">sf_accounts</code>
+                            claim (Step 7)
                           </td>
                         </tr>
                         <tr>
@@ -568,7 +578,6 @@ function download(content: string, filename: string) {
                           <td>Selected OAuth Scopes</td>
                           <td>
                             <code class="sf-setup-inline">api</code>,
-                            <code class="sf-setup-inline">refresh_token</code>,
                             <code class="sf-setup-inline">openid</code>,
                             <code class="sf-setup-inline">web</code>
                           </td>
@@ -579,133 +588,57 @@ function download(content: string, filename: string) {
                         </tr>
                       </tbody>
                     </table>
+                    <p class="sf-setup-step__note">
+                      Do not add
+                      <code class="sf-setup-inline">refresh_token</code>: the
+                      token exchange flow does not use refresh tokens, and
+                      leaving it out limits what a stolen token can do.
+                    </p>
                   </div>
                 </div>
 
                 <div class="sf-setup-step">
                   <span class="sf-setup-step__num">3</span>
                   <div>
-                    <p class="sf-setup-step__title">Deploy the Apex Handler</p>
+                    <p class="sf-setup-step__title">
+                      Deploy the Apex Token Exchange Handler
+                    </p>
                     <p class="sf-setup-step__desc">
                       Create this Apex class in Setup →
-                      <strong>Apex Classes</strong>. It extends
+                      <strong>Apex Classes</strong> (or deploy it with the
+                      Salesforce CLI). It extends
                       <code class="sf-setup-inline"
-                        >Auth.ExternalClientAppOauthHandler</code
-                      >, validates the incoming Auth0 id_token using the
-                      uploaded certificate, and looks up the Salesforce user by
-                      email.
+                        >Auth.Oauth2TokenExchangeHandler</code
+                      >. It verifies the Auth0 id_token signature against the
+                      tenant's JWKS endpoint, checks expiry, issuer and
+                      audience, and maps the token's
+                      <code class="sf-setup-inline">sf_accounts</code> claim to
+                      a Salesforce user.
                     </p>
                     <div class="sf-setup-code sf-setup-code--apex">
                       <code
-                        >public class WebAppExtClntAppHandler extends
-                        Auth.ExternalClientAppOauthHandler &#123;</code
+                        v-for="(
+                          line, index
+                        ) in APEX_TOKEN_EXCHANGE_HANDLER_LINES"
+                        :key="index"
+                        >{{ line || " " }}</code
                       >
-                      <code>&nbsp;</code>
-                      <code
-                        >&nbsp; public Auth.TokenValidationResult
-                        validateIncomingToken(</code
-                      >
-                      <code
-                        >&nbsp;&nbsp;&nbsp; String appDeveloperName,
-                        Auth.IntegratingAppType appType,</code
-                      >
-                      <code
-                        >&nbsp;&nbsp;&nbsp; String incomingToken,
-                        Auth.OAuth2TokenExchangeType tokenType</code
-                      >
-                      <code>&nbsp; ) &#123;</code>
-                      <code
-                        >&nbsp;&nbsp;&nbsp; if (tokenType !=
-                        Auth.OAuth2TokenExchangeType.JWT)</code
-                      >
-                      <code
-                        >&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; return new
-                        Auth.TokenValidationResult(</code
-                      >
-                      <code
-                        >&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; false, null,
-                        null, incomingToken, tokenType, 'Expected JWT');</code
-                      >
-                      <code>&nbsp;</code>
-                      <code>&nbsp;&nbsp;&nbsp; String sub;</code>
-                      <code>&nbsp;&nbsp;&nbsp; try &#123;</code>
-                      <code
-                        >&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Auth.JWT jwt =
-                        Auth.JWTUtil.validateJWTWithCert(</code
-                      >
-                      <code
-                        >&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                        incomingToken, '&lt;certificate_name&gt;');</code
-                      >
-                      <code
-                        >&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; sub =
-                        jwt.getSub();</code
-                      >
-                      <code
-                        >&nbsp;&nbsp;&nbsp; &#125; catch (Exception e)
-                        &#123;</code
-                      >
-                      <code
-                        >&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; return new
-                        Auth.TokenValidationResult(</code
-                      >
-                      <code
-                        >&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; false, null,
-                        null, incomingToken, tokenType,</code
-                      >
-                      <code
-                        >&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 'JWT
-                        validation failed: ' + e.getMessage());</code
-                      >
-                      <code>&nbsp;&nbsp;&nbsp; &#125;</code>
-                      <code>&nbsp;</code>
-                      <code
-                        >&nbsp;&nbsp;&nbsp; Auth.UserData userData = new
-                        Auth.UserData(</code
-                      >
-                      <code
-                        >&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; null, null, null, null,
-                        sub, null, sub, null, 'WebApp', null, null);</code
-                      >
-                      <code
-                        >&nbsp;&nbsp;&nbsp; return new
-                        Auth.TokenValidationResult(</code
-                      >
-                      <code
-                        >&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; true, null, userData,
-                        incomingToken, tokenType, null);</code
-                      >
-                      <code>&nbsp; &#125;</code>
-                      <code>&nbsp;</code>
-                      <code>&nbsp; public User getUserForTokenSubject(</code>
-                      <code
-                        >&nbsp;&nbsp;&nbsp; Id networkId,
-                        Auth.TokenValidationResult result,</code
-                      >
-                      <code
-                        >&nbsp;&nbsp;&nbsp; Boolean canCreateUser, String
-                        appDeveloperName, Auth.IntegratingAppType appType</code
-                      >
-                      <code>&nbsp; ) &#123;</code>
-                      <code
-                        >&nbsp;&nbsp;&nbsp; String email =
-                        result.userData.email;</code
-                      >
-                      <code
-                        >&nbsp;&nbsp;&nbsp; List&lt;User&gt; users = [SELECT Id
-                        FROM User</code
-                      >
-                      <code
-                        >&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; WHERE Email = :email AND
-                        IsActive = true LIMIT 1];</code
-                      >
-                      <code
-                        >&nbsp;&nbsp;&nbsp; return users.isEmpty() ? null :
-                        users[0];</code
-                      >
-                      <code>&nbsp; &#125;</code>
-                      <code>&#125;</code>
                     </div>
+                    <p class="sf-setup-step__note">
+                      Replace
+                      <code class="sf-setup-inline"
+                        >&lt;auth0_tenant_domain&gt;</code
+                      >
+                      (for example
+                      <code class="sf-setup-inline">my-tenant.us.auth0.com</code
+                      >, no <code class="sf-setup-inline">https://</code>) and
+                      <code class="sf-setup-inline"
+                        >&lt;auth0_client_id&gt;</code
+                      >
+                      (the Client ID of the Auth0 application that signs users
+                      in to this web app). Tokens issued to any other Auth0
+                      application are rejected.
+                    </p>
                   </div>
                 </div>
 
@@ -713,7 +646,7 @@ function download(content: string, filename: string) {
                   <span class="sf-setup-step__num">4</span>
                   <div>
                     <p class="sf-setup-step__title">
-                      Register the Token Exchange Handler
+                      Register the Handler and Enable the App
                     </p>
                     <p class="sf-setup-step__desc">
                       In Setup → <strong>Token Exchange Handlers</strong> (or
@@ -729,19 +662,19 @@ function download(content: string, filename: string) {
                           <td>Developer Name</td>
                           <td>
                             <code class="sf-setup-inline"
-                              >WebAppExtClntAppHandler</code
+                              >&lt;handler_name&gt;</code
                             >
                           </td>
                         </tr>
                         <tr>
                           <td>Master Label</td>
-                          <td>WebApp Ext Client App Handler</td>
+                          <td>&lt;handler label&gt;</td>
                         </tr>
                         <tr>
                           <td>Apex Handler Class</td>
                           <td>
                             <code class="sf-setup-inline"
-                              >WebAppExtClntAppHandler</code
+                              >WebAppTokenExchangeHandler</code
                             >
                           </td>
                         </tr>
@@ -754,7 +687,39 @@ function download(content: string, filename: string) {
                           <td>Checked</td>
                         </tr>
                         <tr>
-                          <td>Access Token Supported</td>
+                          <td>Refresh Token Supported</td>
+                          <td>Unchecked</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                    <p class="sf-setup-step__desc">
+                      Then open the handler → <strong>View Details</strong> →
+                      <strong>Enabled Apps</strong> →
+                      <strong>Enable New App</strong>. This is what links the
+                      handler to your app.
+                    </p>
+                    <table class="sf-setup-table">
+                      <tbody>
+                        <tr>
+                          <td>App</td>
+                          <td>
+                            <code class="sf-setup-inline"
+                              >&lt;external_client_app_name&gt;</code
+                            >
+                          </td>
+                        </tr>
+                        <tr>
+                          <td>Run as</td>
+                          <td>
+                            <code class="sf-setup-inline"
+                              >&lt;integration_user&gt;</code
+                            >
+                            — a dedicated low-privilege user, not a personal
+                            admin account
+                          </td>
+                        </tr>
+                        <tr>
+                          <td>Default handler</td>
                           <td>Checked</td>
                         </tr>
                       </tbody>
@@ -774,23 +739,6 @@ function download(content: string, filename: string) {
                     <table class="sf-setup-table">
                       <tbody>
                         <tr>
-                          <td>Apex Handler</td>
-                          <td>
-                            <code class="sf-setup-inline"
-                              >WebAppExtClntAppHandler</code
-                            >
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>Execute Handler As</td>
-                          <td>
-                            <code class="sf-setup-inline"
-                              >&lt;your_process_user&gt;</code
-                            >
-                            — automated process / integration user
-                          </td>
-                        </tr>
-                        <tr>
                           <td>Permitted Users</td>
                           <td>
                             <strong
@@ -799,20 +747,31 @@ function download(content: string, filename: string) {
                           </td>
                         </tr>
                         <tr>
-                          <td>IP Relaxation</td>
-                          <td>Relax IP restrictions (Bypass)</td>
+                          <td>Authorized Users</td>
+                          <td>
+                            Add via a <strong>Permission Set</strong> assigned
+                            only to the users who may sign in this way. Avoid
+                            broad profiles such as
+                            <code class="sf-setup-inline"
+                              >System Administrator</code
+                            >, which would let any admin be reached through the
+                            app.
+                          </td>
                         </tr>
                         <tr>
                           <td>Token Exchange Flow</td>
                           <td><strong>Enable</strong></td>
                         </tr>
                         <tr>
-                          <td>Authorized Users</td>
+                          <td>Refresh Token Policy</td>
+                          <td>Expire immediately</td>
+                        </tr>
+                        <tr>
+                          <td>IP Relaxation</td>
                           <td>
-                            Add via Profile:
-                            <code class="sf-setup-inline"
-                              >System Administrator</code
-                            >
+                            Relax IP restrictions (Bypass) — the token signature
+                            is then the only gate. Enforce IP restrictions
+                            instead if the web app has a fixed outbound IP.
                           </td>
                         </tr>
                       </tbody>
@@ -833,8 +792,41 @@ function download(content: string, filename: string) {
                       <code class="sf-setup-inline"
                         >&lt;your_org_login_url&gt;</code
                       >
-                      as the Login URL. No private key is needed — the web app's
-                      Auth0 session token is used directly.
+                      as the Login URL. No certificate or private key is needed
+                      — the web app's Auth0 session token is used directly.
+                    </p>
+                  </div>
+                </div>
+
+                <div class="sf-setup-step">
+                  <span class="sf-setup-step__num">7</span>
+                  <div>
+                    <p class="sf-setup-step__title">
+                      Add the sf_accounts Claim in Auth0
+                    </p>
+                    <p class="sf-setup-step__desc">
+                      The handler looks up the Salesforce user from a custom
+                      claim on the Auth0 id_token. Add it with an Auth0 Action
+                      that reads it from the user's
+                      <strong>app_metadata</strong> (never
+                      <code class="sf-setup-inline">user_metadata</code>, which
+                      users can edit themselves):
+                    </p>
+                    <div class="sf-setup-code">
+                      <code>sf_accounts: [</code>
+                      <code>
+                        { "appDeveloperName":
+                        "&lt;external_client_app_name&gt;",</code
+                      >
+                      <code> "sf_username": "user@your-org.example" }</code>
+                      <code>]</code>
+                    </div>
+                    <p class="sf-setup-step__note">
+                      Use the exact claim name
+                      <code class="sf-setup-inline">sf_accounts</code>. The
+                      <code class="sf-setup-inline">sf_username</code> must be
+                      an active Salesforce user who is covered by the policy in
+                      Step 5.
                     </p>
                   </div>
                 </div>
