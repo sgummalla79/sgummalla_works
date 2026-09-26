@@ -181,14 +181,9 @@ const idleMessage = computed(
     `Salesforce loads here. Click “${launchLabel.value}”, then choose “Open here (Lightning Out)”.`,
 );
 
-// Lightning Out 2.0 cannot be re-initialised inside a page: its script keeps the
-// first session and a spent single-use frontdoor URL, so a later connect shows
-// Salesforce's login page, which refuses to be framed ("refused to connect").
-// Reloading gives the next connect a clean runtime.
 function closeLightningOut() {
   lightningOut.value = null;
   lightningClientId.value = null;
-  window.location.reload();
 }
 
 // Ends the browser's Salesforce session for this org and clears the panel.
