@@ -11,6 +11,10 @@ import {
   type LightningOutSession,
 } from "../../api/salesforceExchange";
 import LightningOutPanel from "../../components/LightningOutPanel.vue";
+import {
+  signOutOfSalesforce,
+  salesforceLogoutUrlFor,
+} from "../../utils/salesforceLogout";
 
 const router = useRouter();
 const auth = useAuthStore();
@@ -134,7 +138,12 @@ async function openLightningOut() {
   logModal.value.loading = true;
   logModal.value.error = null;
   try {
-    lightningOut.value = await getSfLightningOutSession(clientId);
+    const session = await getSfLightningOutSession(clientId);
+    // This browser may already hold a Salesforce session for another user (for
+    // example an admin login in another tab). Lightning Out would reuse it and
+    // show the wrong user, so end it before mounting the new one.
+    await signOutOfSalesforce([salesforceLogoutUrlFor(session.scriptUrl)]);
+    lightningOut.value = session;
     closeLogModal();
   } catch (err) {
     logModal.value.error =

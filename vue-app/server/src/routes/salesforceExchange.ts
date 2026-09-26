@@ -33,7 +33,12 @@ import {
   requestLightningOutSession,
 } from "../lib/sfLightningOut.js";
 import { refreshAccessToken } from "../lib/sfBearerFlow.js";
-import { upsertSfToken, getValidSfToken } from "../lib/sfTokenDb.js";
+import {
+  upsertSfToken,
+  getValidSfToken,
+  getStoredRefreshToken,
+} from "../lib/sfTokenDb.js";
+import { getIdToken } from "../lib/idTokenRepository.js";
 import { findOwnedExchangeClient } from "../lib/sfClientRepository.js";
 import { requestFrontdoorUri } from "../lib/sfFrontdoor.js";
 import { toPublicSfToken } from "../lib/sfTokenPresenter.js";
@@ -42,6 +47,11 @@ import { normalizeSalesforceOrigin } from "../lib/sfHostAllowlist.js";
 
 // Same response for "missing" and "not yours" so ids cannot be probed.
 const CLIENT_NOT_FOUND = "Client not found";
+
+// Token Exchange forwards the user's Auth0 token and never signs anything, so
+// these clients have no private key. sf_clients.private_key is NOT NULL because
+// JWT Bearer clients share the table, hence the empty value.
+const NO_PRIVATE_KEY = "";
 
 const router: Router = Router();
 router.use(requireAuth);
@@ -73,23 +83,10 @@ router.post("/clients", async (req: Request, res: Response) => {
     label,
     client_id,
     login_url = "https://login.salesforce.com",
-    private_key,
   } = req.body as Record<string, string>;
 
-  if (!label || !client_id || !private_key) {
-    res
-      .status(400)
-      .json({ error: "label, client_id, and private_key are required" });
-    return;
-  }
-
-  if (
-    !private_key.includes("-----BEGIN") ||
-    !private_key.includes("PRIVATE KEY-----")
-  ) {
-    res
-      .status(400)
-      .json({ error: "private_key must be a PEM-encoded RSA private key" });
+  if (!label || !client_id) {
+    res.status(400).json({ error: "label and client_id are required" });
     return;
   }
 
@@ -104,7 +101,7 @@ router.post("/clients", async (req: Request, res: Response) => {
   try {
     const [row] = await sql`
       INSERT INTO sf_clients (label, client_id, login_url, private_key, flow_type, user_id)
-      VALUES (${label}, ${client_id}, ${loginOrigin}, ${private_key}, 'token_exchange', ${userId})
+      VALUES (${label}, ${client_id}, ${loginOrigin}, ${NO_PRIVATE_KEY}, 'token_exchange', ${userId})
       RETURNING id, label, client_id, login_url, created_at
     `;
     res.status(201).json(row);
@@ -120,25 +117,13 @@ router.post("/clients", async (req: Request, res: Response) => {
 router.patch("/clients/:id", async (req: Request, res: Response) => {
   const userId = req.user!.id;
   const { id } = req.params;
-  const { label, client_id, login_url, private_key } = req.body as Record<
+  const { label, client_id, login_url } = req.body as Record<
     string,
     string | undefined
   >;
 
-  if (!label && !client_id && !login_url && !private_key) {
+  if (!label && !client_id && !login_url) {
     res.status(400).json({ error: "No fields provided to update" });
-    return;
-  }
-
-  if (
-    private_key !== undefined &&
-    private_key !== "" &&
-    (!private_key.includes("-----BEGIN") ||
-      !private_key.includes("PRIVATE KEY-----"))
-  ) {
-    res
-      .status(400)
-      .json({ error: "private_key must be a PEM-encoded RSA private key" });
     return;
   }
 
@@ -157,8 +142,7 @@ router.patch("/clients/:id", async (req: Request, res: Response) => {
       UPDATE sf_clients SET
         label       = COALESCE(${label ?? null}, label),
         client_id   = COALESCE(${client_id ?? null}, client_id),
-        login_url   = COALESCE(${loginOrigin ?? null}, login_url),
-        private_key = CASE WHEN ${private_key ?? ""} = '' THEN private_key ELSE ${private_key ?? ""} END
+        login_url   = COALESCE(${loginOrigin ?? null}, login_url)
       WHERE id = ${id} AND flow_type = 'token_exchange' AND user_id = ${userId}
       RETURNING id, label, client_id, login_url, created_at
     `;
@@ -265,11 +249,9 @@ router.post("/clients/:id/token", async (req: Request, res: Response) => {
 
   try {
     // Retrieve the Auth0 id_token saved at login
-    const [tokenRow] = await sql`
-      SELECT id_token FROM user_id_tokens WHERE user_id = ${userId}
-    `;
+    const idToken = await getIdToken(userId);
 
-    if (!tokenRow) {
+    if (!idToken) {
       res.status(400).json({
         error:
           "No Auth0 token found. Please log out and log in again via Auth0.",
@@ -286,11 +268,7 @@ router.post("/clients/:id/token", async (req: Request, res: Response) => {
 
     const start = Date.now();
     const { access_token, instance_url, sf_username } =
-      await exchangeWebAppToken(
-        client.client_id,
-        tokenRow.id_token as string,
-        client.login_url,
-      );
+      await exchangeWebAppToken(client.client_id, idToken, client.login_url);
 
     const row = await upsertSfToken(id, sf_username, {
       access_token,
@@ -326,10 +304,8 @@ router.get("/clients/:id/frontdoor", async (req: Request, res: Response) => {
 
   try {
     // 1 — Auth0 identity token
-    const [idTokenRow] = await sql`
-      SELECT id_token FROM user_id_tokens WHERE user_id = ${userId}
-    `;
-    if (!idTokenRow) {
+    const idToken = await getIdToken(userId);
+    if (!idToken) {
       res.status(400).json({
         error: "No Auth0 token found. Please log out and log in again.",
       });
@@ -352,7 +328,7 @@ router.get("/clients/:id/frontdoor", async (req: Request, res: Response) => {
     });
     const result = await exchangeWebAppToken(
       clientRow.client_id,
-      idTokenRow.id_token as string,
+      idToken,
       clientRow.login_url,
     );
     await upsertSfToken(id, result.sf_username, result);
@@ -399,10 +375,8 @@ router.get(
     try {
       const config = getLightningOutConfig();
 
-      const [idTokenRow] = await sql`
-      SELECT id_token FROM user_id_tokens WHERE user_id = ${userId}
-    `;
-      if (!idTokenRow) {
+      const idToken = await getIdToken(userId);
+      if (!idToken) {
         res.status(400).json({
           error: "No Auth0 token found. Please log out and log in again.",
         });
@@ -419,7 +393,7 @@ router.get(
 
       const result = await exchangeWebAppToken(
         clientRow.client_id,
-        idTokenRow.id_token as string,
+        idToken,
         clientRow.login_url,
       );
       await upsertSfToken(id, result.sf_username, result);
@@ -465,42 +439,34 @@ router.post(
         return;
       }
 
-      const [saved] = await sql`
-        SELECT refresh_token FROM sf_tokens
-        WHERE client_db_id = ${id} AND sf_username = ${sf_username}
-      `;
+      const savedRefreshToken = await getStoredRefreshToken(id, sf_username);
 
       let token: { access_token: string; instance_url: string };
 
-      if (saved?.refresh_token) {
+      if (savedRefreshToken) {
         try {
           token = await refreshAccessToken(
-            saved.refresh_token as string,
+            savedRefreshToken,
             client.client_id,
             normalizeSalesforceOrigin(client.login_url, "login_url"),
           );
         } catch {
           // Refresh token expired — re-exchange using stored Auth0 id_token
-          const [tokenRow] = await sql`
-            SELECT id_token FROM user_id_tokens WHERE user_id = ${req.user!.id}
-          `;
-          if (!tokenRow)
-            throw new Error("No Auth0 token — please log in again");
+          const idToken = await getIdToken(req.user!.id);
+          if (!idToken) throw new Error("No Auth0 token — please log in again");
           const result = await exchangeWebAppToken(
             client.client_id,
-            tokenRow.id_token as string,
+            idToken,
             client.login_url,
           );
           token = result;
         }
       } else {
-        const [tokenRow] = await sql`
-          SELECT id_token FROM user_id_tokens WHERE user_id = ${req.user!.id}
-        `;
-        if (!tokenRow) throw new Error("No Auth0 token — please log in again");
+        const idToken = await getIdToken(req.user!.id);
+        if (!idToken) throw new Error("No Auth0 token — please log in again");
         const result = await exchangeWebAppToken(
           client.client_id,
-          tokenRow.id_token as string,
+          idToken,
           client.login_url,
         );
         token = result;
@@ -548,13 +514,11 @@ router.post("/clients/:id/query", async (req: Request, res: Response) => {
 
     let tokenRow = await getValidSfToken(id, sf_username);
     if (!tokenRow) {
-      const [idTokenRow] = await sql`
-        SELECT id_token FROM user_id_tokens WHERE user_id = ${req.user!.id}
-      `;
-      if (!idTokenRow) throw new Error("No Auth0 token — please log in again");
+      const idToken = await getIdToken(req.user!.id);
+      if (!idToken) throw new Error("No Auth0 token — please log in again");
       const result = await exchangeWebAppToken(
         client.client_id,
-        idTokenRow.id_token as string,
+        idToken,
         client.login_url,
       );
       tokenRow = await upsertSfToken(id, result.sf_username, result);

@@ -25,7 +25,6 @@ export async function createExchangeClient(payload: {
   label: string;
   client_id: string;
   login_url: string;
-  private_key: string;
 }): Promise<SfClient> {
   const { data } = await client.post<SfClient>(
     "/salesforce-exchange/clients",
@@ -40,7 +39,6 @@ export async function updateExchangeClient(
     label: string;
     client_id: string;
     login_url: string;
-    private_key: string;
   }>,
 ): Promise<SfClient> {
   const { data } = await client.patch<SfClient>(

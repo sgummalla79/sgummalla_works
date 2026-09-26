@@ -1,4 +1,5 @@
 import sql from "./db.js";
+import { tokenCipher } from "./tokenCrypto.js";
 
 export interface OwnedExchangeClient {
   id: string;
@@ -38,5 +39,9 @@ export async function findOwnedJwtBearerClient(
     FROM sf_clients
     WHERE id = ${id} AND flow_type = 'jwt_bearer' AND user_id = ${userId}
   `;
-  return (row as OwnedJwtBearerClient | undefined) ?? null;
+  if (!row) return null;
+  return {
+    ...(row as OwnedJwtBearerClient),
+    private_key: tokenCipher.decrypt(row.private_key as string),
+  };
 }

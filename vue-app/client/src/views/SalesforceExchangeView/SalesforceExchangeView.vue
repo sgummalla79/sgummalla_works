@@ -34,7 +34,6 @@ const flyoutForm = ref({
   label: "",
   client_id: "",
   login_url: "https://login.salesforce.com",
-  private_key: "",
 });
 const flyoutError = ref("");
 const flyoutSaving = ref(false);
@@ -46,7 +45,6 @@ function openRegisterFlyout() {
     label: "",
     client_id: "",
     login_url: "https://login.salesforce.com",
-    private_key: "",
   };
   flyoutError.value = "";
   flyoutOpen.value = true;
@@ -59,7 +57,6 @@ function openEditFlyout(c: SfClient) {
     label: c.label,
     client_id: c.client_id,
     login_url: c.login_url,
-    private_key: "",
   };
   flyoutError.value = "";
   flyoutOpen.value = true;
@@ -71,11 +68,11 @@ function closeFlyout() {
 
 async function handleFlyoutSubmit() {
   flyoutError.value = "";
-  const { label, client_id, login_url, private_key } = flyoutForm.value;
+  const { label, client_id, login_url } = flyoutForm.value;
 
   if (flyoutMode.value === "register") {
-    if (!label || !client_id || !private_key) {
-      flyoutError.value = "Label, Consumer Key, and Private Key are required";
+    if (!label || !client_id) {
+      flyoutError.value = "Label and Consumer Key are required";
       return;
     }
     flyoutSaving.value = true;
@@ -84,7 +81,6 @@ async function handleFlyoutSubmit() {
         label,
         client_id,
         login_url,
-        private_key,
       });
       clients.value.unshift(created);
       flyoutOpen.value = false;
@@ -102,7 +98,6 @@ async function handleFlyoutSubmit() {
         label,
         client_id,
         login_url,
-        ...(private_key ? { private_key } : {}),
       });
       const idx = clients.value.findIndex((x: SfClient) => x.id === updated.id);
       if (idx !== -1) clients.value[idx] = updated;
@@ -656,21 +651,6 @@ onMounted(loadClients);
           placeholder="https://login.salesforce.com"
           autocomplete="off"
         />
-        <div class="sf-field">
-          <label class="sf-field__label">
-            RSA Private Key (PEM){{
-              flyoutMode === "edit" ? " — leave blank to keep existing" : ""
-            }}
-          </label>
-          <textarea
-            v-model="flyoutForm.private_key"
-            class="sf-field__textarea"
-            placeholder="-----BEGIN RSA PRIVATE KEY-----&#10;...&#10;-----END RSA PRIVATE KEY-----"
-            rows="7"
-            spellcheck="false"
-            autocomplete="off"
-          />
-        </div>
         <div class="sf-flyout__footer">
           <Button
             variant="primary"

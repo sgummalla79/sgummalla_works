@@ -31,8 +31,13 @@ export async function login(payload: LoginPayload): Promise<ApiUser> {
   return data.user;
 }
 
-export async function logout(): Promise<void> {
-  await client.post("/auth/logout");
+// Returns the Salesforce logout URLs the browser must visit to end its own
+// Salesforce session (empty when the user had none).
+export async function logout(): Promise<string[]> {
+  const { data } = await client.post<{ salesforceLogoutUrls?: string[] }>(
+    "/auth/logout",
+  );
+  return data.salesforceLogoutUrls ?? [];
 }
 
 export async function me(): Promise<ApiUser> {

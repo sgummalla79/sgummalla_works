@@ -32,7 +32,12 @@ import {
   refreshAccessToken,
   type SfTokenResponse,
 } from "../lib/sfBearerFlow.js";
-import { upsertSfToken, getValidSfToken } from "../lib/sfTokenDb.js";
+import {
+  upsertSfToken,
+  getValidSfToken,
+  getStoredRefreshToken,
+} from "../lib/sfTokenDb.js";
+import { sealSecret } from "../lib/tokenCrypto.js";
 import { findOwnedJwtBearerClient } from "../lib/sfClientRepository.js";
 import { normalizeSalesforceOrigin } from "../lib/sfHostAllowlist.js";
 import { toPublicSfToken } from "../lib/sfTokenPresenter.js";
@@ -100,7 +105,7 @@ router.post("/clients", async (req: Request, res: Response) => {
   try {
     const [row] = await sql`
       INSERT INTO sf_clients (label, client_id, login_url, private_key, flow_type, user_id)
-      VALUES (${label}, ${client_id}, ${loginOrigin}, ${private_key}, 'jwt_bearer', ${userId})
+      VALUES (${label}, ${client_id}, ${loginOrigin}, ${sealSecret(private_key)}, 'jwt_bearer', ${userId})
       RETURNING id, label, client_id, login_url, created_at
     `;
     res.status(201).json(row);
@@ -164,7 +169,7 @@ router.patch("/clients/:id", async (req: Request, res: Response) => {
         login_url   = COALESCE(${loginOrigin ?? null}, login_url),
         private_key = CASE
           WHEN ${private_key ?? ""} = '' THEN private_key
-          ELSE ${private_key ?? ""}
+          ELSE ${sealSecret(private_key) ?? ""}
         END
       WHERE id = ${id} AND user_id = ${userId}
       RETURNING id, label, client_id, login_url, created_at
@@ -346,17 +351,14 @@ router.post(
         return;
       }
 
-      const [saved] = await sql`
-      SELECT refresh_token FROM sf_tokens
-      WHERE client_db_id = ${id} AND sf_username = ${sf_username}
-    `;
+      const savedRefreshToken = await getStoredRefreshToken(id, sf_username);
 
       let token: SfTokenResponse;
 
-      if (saved?.refresh_token) {
+      if (savedRefreshToken) {
         try {
           token = await refreshAccessToken(
-            saved.refresh_token as string,
+            savedRefreshToken,
             client.client_id,
             client.login_url,
           );
