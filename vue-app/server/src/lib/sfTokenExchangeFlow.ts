@@ -1,4 +1,5 @@
 import { logger } from "./logger.js";
+import { normalizeSalesforceOrigin } from "./sfHostAllowlist.js";
 
 // ── Resolve Salesforce username from access token ─────────────────────────────
 
@@ -32,7 +33,9 @@ export async function exchangeWebAppToken(
   instance_url: string;
   sf_username: string;
 }> {
-  const tokenUrl = `${loginUrl.replace(/\/$/, "")}/services/oauth2/token`;
+  // The id_token is sent to this host, so it must be a Salesforce host.
+  const loginOrigin = normalizeSalesforceOrigin(loginUrl, "login_url");
+  const tokenUrl = `${loginOrigin}/services/oauth2/token`;
 
   const res = await fetch(tokenUrl, {
     method: "POST",
@@ -70,18 +73,21 @@ export async function exchangeWebAppToken(
     access_token: string;
     instance_url: string;
   };
-  const sf_username = await fetchSfUsername(
-    data.access_token,
+  // instance_url comes from the response; never send the new access token (or
+  // let the browser load scripts) from a host outside Salesforce.
+  const instanceOrigin = normalizeSalesforceOrigin(
     data.instance_url,
+    "instance_url",
   );
+  const sf_username = await fetchSfUsername(data.access_token, instanceOrigin);
 
   logger.debug("SF Token Exchange — success", {
     sf_username,
-    instance_url: data.instance_url,
+    instance_url: instanceOrigin,
   });
   return {
     access_token: data.access_token,
-    instance_url: data.instance_url,
+    instance_url: instanceOrigin,
     sf_username,
   };
 }

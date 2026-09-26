@@ -28,8 +28,17 @@ function emitSfOp(
 }
 import sql from "../lib/db.js";
 import { exchangeWebAppToken } from "../lib/sfTokenExchangeFlow.js";
+import {
+  getLightningOutConfig,
+  requestLightningOutSession,
+} from "../lib/sfLightningOut.js";
 import { refreshAccessToken } from "../lib/sfBearerFlow.js";
 import { upsertSfToken, getValidSfToken } from "../lib/sfTokenDb.js";
+import { findOwnedExchangeClient } from "../lib/sfClientRepository.js";
+import { normalizeSalesforceOrigin } from "../lib/sfHostAllowlist.js";
+
+// Same response for "missing" and "not yours" so ids cannot be probed.
+const CLIENT_NOT_FOUND = "Client not found";
 
 const router: Router = Router();
 router.use(requireAuth);
@@ -81,10 +90,18 @@ router.post("/clients", async (req: Request, res: Response) => {
     return;
   }
 
+  let loginOrigin: string;
+  try {
+    loginOrigin = normalizeSalesforceOrigin(login_url, "login_url");
+  } catch (err) {
+    res.status(400).json({ error: (err as Error).message });
+    return;
+  }
+
   try {
     const [row] = await sql`
       INSERT INTO sf_clients (label, client_id, login_url, private_key, flow_type, user_id)
-      VALUES (${label}, ${client_id}, ${login_url}, ${private_key}, 'token_exchange', ${userId})
+      VALUES (${label}, ${client_id}, ${loginOrigin}, ${private_key}, 'token_exchange', ${userId})
       RETURNING id, label, client_id, login_url, created_at
     `;
     res.status(201).json(row);
@@ -122,12 +139,22 @@ router.patch("/clients/:id", async (req: Request, res: Response) => {
     return;
   }
 
+  let loginOrigin: string | undefined;
+  if (login_url) {
+    try {
+      loginOrigin = normalizeSalesforceOrigin(login_url, "login_url");
+    } catch (err) {
+      res.status(400).json({ error: (err as Error).message });
+      return;
+    }
+  }
+
   try {
     const [row] = await sql`
       UPDATE sf_clients SET
         label       = COALESCE(${label ?? null}, label),
         client_id   = COALESCE(${client_id ?? null}, client_id),
-        login_url   = COALESCE(${login_url ?? null}, login_url),
+        login_url   = COALESCE(${loginOrigin ?? null}, login_url),
         private_key = CASE WHEN ${private_key ?? ""} = '' THEN private_key ELSE ${private_key ?? ""} END
       WHERE id = ${id} AND flow_type = 'token_exchange' AND user_id = ${userId}
       RETURNING id, label, client_id, login_url, created_at
@@ -173,6 +200,10 @@ router.delete("/clients/:id", async (req: Request, res: Response) => {
 router.get("/clients/:id/tokens", async (req: Request, res: Response) => {
   const { id } = req.params;
   try {
+    if (!(await findOwnedExchangeClient(id, req.user!.id))) {
+      res.status(404).json({ error: CLIENT_NOT_FOUND });
+      return;
+    }
     const rows = await sql`
       SELECT sf_username, instance_url, issued_at,
              (refresh_token IS NOT NULL) AS has_refresh_token
@@ -195,6 +226,10 @@ router.delete(
   async (req: Request, res: Response) => {
     const { id, sf_username } = req.params;
     try {
+      if (!(await findOwnedExchangeClient(id, req.user!.id))) {
+        res.status(404).json({ error: CLIENT_NOT_FOUND });
+        return;
+      }
       const [row] = await sql`
         DELETE FROM sf_tokens
         WHERE client_db_id = ${id} AND sf_username = ${sf_username}
@@ -239,21 +274,19 @@ router.post("/clients/:id/token", async (req: Request, res: Response) => {
       return;
     }
 
-    const [client] = await sql`
-      SELECT client_id, login_url FROM sf_clients WHERE id = ${id}
-    `;
+    const client = await findOwnedExchangeClient(id, userId);
 
     if (!client) {
-      res.status(404).json({ error: "Client not found" });
+      res.status(404).json({ error: CLIENT_NOT_FOUND });
       return;
     }
 
     const start = Date.now();
     const { access_token, instance_url, sf_username } =
       await exchangeWebAppToken(
-        client.client_id as string,
+        client.client_id,
         tokenRow.id_token as string,
-        client.login_url as string,
+        client.login_url,
       );
 
     const row = await upsertSfToken(id, sf_username, {
@@ -302,12 +335,9 @@ router.get("/clients/:id/frontdoor", async (req: Request, res: Response) => {
     logs.push({ step: "Auth0 identity token found", status: "ok" });
 
     // 2 — Client record
-    const [clientRow] = await sql`
-      SELECT id, label, client_id, login_url FROM sf_clients
-      WHERE id = ${id} AND flow_type = 'token_exchange'
-    `;
+    const clientRow = await findOwnedExchangeClient(id, userId);
     if (!clientRow) {
-      res.status(404).json({ error: "Token Exchange client not found" });
+      res.status(404).json({ error: CLIENT_NOT_FOUND });
       return;
     }
     logs.push({ step: `Client loaded: ${clientRow.label}`, status: "ok" });
@@ -318,9 +348,9 @@ router.get("/clients/:id/frontdoor", async (req: Request, res: Response) => {
       status: "info",
     });
     const result = await exchangeWebAppToken(
-      clientRow.client_id as string,
+      clientRow.client_id,
       idTokenRow.id_token as string,
-      clientRow.login_url as string,
+      clientRow.login_url,
     );
     await upsertSfToken(id, result.sf_username, result);
     logs.push({
@@ -342,6 +372,70 @@ router.get("/clients/:id/frontdoor", async (req: Request, res: Response) => {
   }
 });
 
+// ── GET /api/salesforce-exchange/clients/:id/lightning-out ───────────────────
+// Fresh token exchange, then a Lightning Out 2.0 frontdoor URL for the
+// configured Lightning Out app. The browser never sees the access token.
+
+router.get(
+  "/clients/:id/lightning-out",
+  async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const userId = req.user?.id;
+    if (!userId) {
+      res.status(401).json({ error: "No authenticated user" });
+      return;
+    }
+
+    const logs: LogEntry[] = [];
+
+    try {
+      const config = getLightningOutConfig();
+
+      const [idTokenRow] = await sql`
+      SELECT id_token FROM user_id_tokens WHERE user_id = ${userId}
+    `;
+      if (!idTokenRow) {
+        res.status(400).json({
+          error: "No Auth0 token found. Please log out and log in again.",
+        });
+        return;
+      }
+      logs.push({ step: "Auth0 identity token found", status: "ok" });
+
+      const clientRow = await findOwnedExchangeClient(id, userId);
+      if (!clientRow) {
+        res.status(404).json({ error: CLIENT_NOT_FOUND });
+        return;
+      }
+      logs.push({ step: `Client loaded: ${clientRow.label}`, status: "ok" });
+
+      const result = await exchangeWebAppToken(
+        clientRow.client_id,
+        idTokenRow.id_token as string,
+        clientRow.login_url,
+      );
+      await upsertSfToken(id, result.sf_username, result);
+      logs.push({
+        step: `Session token issued · ${result.sf_username}`,
+        status: "ok",
+      });
+
+      const session = await requestLightningOutSession(
+        result.instance_url,
+        result.access_token,
+        config,
+      );
+      logs.push({ step: "Lightning Out session ready", status: "ok" });
+
+      res.json({ ...session, logs });
+    } catch (err) {
+      const msg =
+        err instanceof Error ? err.message : "Lightning Out request failed";
+      res.status(400).json({ error: msg });
+    }
+  },
+);
+
 // ── POST /api/salesforce-exchange/clients/:id/token/refresh ──────────────────
 
 router.post(
@@ -356,12 +450,10 @@ router.post(
     }
 
     try {
-      const [client] = await sql`
-        SELECT client_id, login_url FROM sf_clients WHERE id = ${id}
-      `;
+      const client = await findOwnedExchangeClient(id, req.user!.id);
 
       if (!client) {
-        res.status(404).json({ error: "Client not found" });
+        res.status(404).json({ error: CLIENT_NOT_FOUND });
         return;
       }
 
@@ -376,8 +468,8 @@ router.post(
         try {
           token = await refreshAccessToken(
             saved.refresh_token as string,
-            client.client_id as string,
-            client.login_url as string,
+            client.client_id,
+            normalizeSalesforceOrigin(client.login_url, "login_url"),
           );
         } catch {
           // Refresh token expired — re-exchange using stored Auth0 id_token
@@ -387,9 +479,9 @@ router.post(
           if (!tokenRow)
             throw new Error("No Auth0 token — please log in again");
           const result = await exchangeWebAppToken(
-            client.client_id as string,
+            client.client_id,
             tokenRow.id_token as string,
-            client.login_url as string,
+            client.login_url,
           );
           token = result;
         }
@@ -399,9 +491,9 @@ router.post(
         `;
         if (!tokenRow) throw new Error("No Auth0 token — please log in again");
         const result = await exchangeWebAppToken(
-          client.client_id as string,
+          client.client_id,
           tokenRow.id_token as string,
-          client.login_url as string,
+          client.login_url,
         );
         token = result;
       }
@@ -439,12 +531,10 @@ router.post("/clients/:id/query", async (req: Request, res: Response) => {
   }
 
   try {
-    const [client] = await sql`
-      SELECT client_id, login_url FROM sf_clients WHERE id = ${id}
-    `;
+    const client = await findOwnedExchangeClient(id, req.user!.id);
 
     if (!client) {
-      res.status(404).json({ error: "Client not found" });
+      res.status(404).json({ error: CLIENT_NOT_FOUND });
       return;
     }
 
@@ -455,15 +545,19 @@ router.post("/clients/:id/query", async (req: Request, res: Response) => {
       `;
       if (!idTokenRow) throw new Error("No Auth0 token — please log in again");
       const result = await exchangeWebAppToken(
-        client.client_id as string,
+        client.client_id,
         idTokenRow.id_token as string,
-        client.login_url as string,
+        client.login_url,
       );
       tokenRow = await upsertSfToken(id, result.sf_username, result);
     }
 
     const queryStart = Date.now();
-    const queryUrl = `${tokenRow.instance_url}/services/data/v62.0/query?q=${encodeURIComponent(soql)}`;
+    const instanceOrigin = normalizeSalesforceOrigin(
+      tokenRow.instance_url as string,
+      "instance_url",
+    );
+    const queryUrl = `${instanceOrigin}/services/data/v62.0/query?q=${encodeURIComponent(soql)}`;
     const sfRes = await fetch(queryUrl, {
       redirect: "error",
       headers: { Authorization: `Bearer ${tokenRow.access_token}` },

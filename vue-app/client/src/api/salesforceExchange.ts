@@ -121,3 +121,20 @@ export async function runExchangeSoqlQuery(
   );
   return data;
 }
+
+export interface LightningOutSession {
+  frontdoorUrl: string;
+  scriptUrl: string;
+  appId: string;
+  components: string[];
+  logs: FrontdoorLog[];
+}
+
+export async function getSfLightningOutSession(
+  id: string,
+): Promise<LightningOutSession> {
+  const { data } = await client.get<LightningOutSession>(
+    `/salesforce-exchange/clients/${id}/lightning-out`,
+  );
+  return data;
+}
