@@ -1,3 +1,4 @@
+import { saveIdToken } from "../lib/idTokenRepository.js";
 import { Router, type Request, type Response } from "express";
 import { Issuer, type TokenSet, type UserinfoResponse } from "openid-client";
 import {
@@ -36,7 +37,6 @@ function emitAuth(
     },
   } as LogRecord);
 }
-import sql from "../lib/db.js";
 
 const router: import("express").Router = Router();
 
@@ -282,13 +282,7 @@ router.get("/callback", async (req: Request, res: Response) => {
 
     // Persist the Auth0 id_token for Token Exchange flow
     if (tokenSet.id_token) {
-      await sql`
-        INSERT INTO user_id_tokens (user_id, id_token)
-        VALUES (${user.id}, ${tokenSet.id_token})
-        ON CONFLICT (user_id) DO UPDATE SET
-          id_token   = EXCLUDED.id_token,
-          updated_at = now()
-      `;
+      await saveIdToken(user.id, tokenSet.id_token);
     }
 
     const token = signToken(user);

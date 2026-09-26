@@ -25,7 +25,6 @@ export async function createExchangeClient(payload: {
   label: string;
   client_id: string;
   login_url: string;
-  private_key: string;
 }): Promise<SfClient> {
   const { data } = await client.post<SfClient>(
     "/salesforce-exchange/clients",
@@ -40,7 +39,6 @@ export async function updateExchangeClient(
     label: string;
     client_id: string;
     login_url: string;
-    private_key: string;
   }>,
 ): Promise<SfClient> {
   const { data } = await client.patch<SfClient>(
@@ -118,6 +116,23 @@ export async function runExchangeSoqlQuery(
   const { data } = await client.post<SoqlResult>(
     `/salesforce-exchange/clients/${id}/query`,
     { sf_username, soql },
+  );
+  return data;
+}
+
+export interface LightningOutSession {
+  frontdoorUrl: string;
+  scriptUrl: string;
+  appId: string;
+  components: string[];
+  logs: FrontdoorLog[];
+}
+
+export async function getSfLightningOutSession(
+  id: string,
+): Promise<LightningOutSession> {
+  const { data } = await client.get<LightningOutSession>(
+    `/salesforce-exchange/clients/${id}/lightning-out`,
   );
   return data;
 }

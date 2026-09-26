@@ -13,7 +13,7 @@
     <isPkceRequired>true</isPkceRequired>
     <isRefreshTokenRotationEnabled>false</isRefreshTokenRotationEnabled>
     <isSecretRequiredForRefreshToken>true</isSecretRequiredForRefreshToken>
-    <isSecretRequiredForTokenExchange>true</isSecretRequiredForTokenExchange>
+    <isSecretRequiredForTokenExchange>false</isSecretRequiredForTokenExchange>
     <isTokenExchangeEnabled>true</isTokenExchangeEnabled>
     <label>sgummallaworks_token_exchange_glbloauth</label>
     <shouldRotateConsumerKey>false</shouldRotateConsumerKey>

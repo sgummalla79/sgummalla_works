@@ -1,5 +1,6 @@
 import { createSign } from "node:crypto";
 import { logger } from "./logger.js";
+import { normalizeSalesforceOrigin } from "./sfHostAllowlist.js";
 
 export interface SfTokenResponse {
   access_token: string;
@@ -58,7 +59,7 @@ function parseTokenResponse(status: number, text: string): SfTokenResponse {
 
   return {
     access_token: data.access_token,
-    instance_url: data.instance_url,
+    instance_url: normalizeSalesforceOrigin(data.instance_url, "instance_url"),
     ...(data.refresh_token ? { refresh_token: data.refresh_token } : {}),
   };
 }
@@ -71,9 +72,11 @@ export async function mintAndExchangeJWT(
   loginUrl: string,
   privateKey: string,
 ): Promise<SfTokenResponse> {
-  const tokenUrl = `${loginUrl.replace(/\/$/, "")}/services/oauth2/token`;
+  // The signed assertion is sent to this host, so it must be a Salesforce host.
+  const loginOrigin = normalizeSalesforceOrigin(loginUrl, "login_url");
+  const tokenUrl = `${loginOrigin}/services/oauth2/token`;
 
-  const jwt = mintJWT(clientId, sfUsername, loginUrl, privateKey);
+  const jwt = mintJWT(clientId, sfUsername, loginOrigin, privateKey);
 
   const res = await fetch(tokenUrl, {
     method: "POST",
@@ -95,7 +98,8 @@ export async function refreshAccessToken(
   clientId: string,
   loginUrl: string,
 ): Promise<SfTokenResponse> {
-  const tokenUrl = `${loginUrl.replace(/\/$/, "")}/services/oauth2/token`;
+  const loginOrigin = normalizeSalesforceOrigin(loginUrl, "login_url");
+  const tokenUrl = `${loginOrigin}/services/oauth2/token`;
 
   const res = await fetch(tokenUrl, {
     method: "POST",

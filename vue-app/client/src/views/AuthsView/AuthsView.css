@@ -1,6 +1,6 @@
 .vz-auths {
   width: 100%;
-  max-width: 720px;
+  max-width: 1600px;
   animation: vz-rise 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
   padding-bottom: 2rem;
 }
@@ -35,9 +35,41 @@
   line-height: 1.6;
 }
 
+/* Cards rail on the left (fixed, readable width); the Salesforce panel takes
+   all remaining space and stays in view while the page scrolls. */
+.vz-auths__layout {
+  display: grid;
+  grid-template-columns: clamp(280px, 24vw, 340px) minmax(0, 1fr);
+  gap: 1.5rem;
+  align-items: stretch;
+}
+
+.vz-auths__side {
+  position: sticky;
+  top: 1rem;
+  align-self: start;
+  height: calc(100dvh - 15rem);
+  min-height: 24rem;
+}
+
+.vz-auths__side :deep(.lo-panel) {
+  height: 100%;
+}
+
+@media (max-width: 1000px) {
+  .vz-auths__layout {
+    grid-template-columns: 1fr;
+  }
+  .vz-auths__side {
+    position: static;
+    height: auto;
+    min-height: 26rem;
+  }
+}
+
 .vz-auths__grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
   gap: 1.25rem;
   margin-bottom: 1rem;
 }
@@ -49,6 +81,10 @@
   gap: 0.6rem;
   aspect-ratio: 1 / 1.2;
   overflow: hidden;
+}
+
+.vz-auths__grid :deep(.vz-auth-card__tag) {
+  white-space: nowrap;
 }
 
 .vz-auths__grid :deep(.vz-auth-card__title) {
@@ -378,4 +414,10 @@
 .sf-line-enter-from {
   opacity: 0;
   transform: translateX(-6px);
+}
+
+/* ── Modal footer ───────────────────────────────────────────────────────────── */
+
+.sf-modal__footer {
+  gap: 0.5rem;
 }

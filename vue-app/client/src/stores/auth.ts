@@ -1,3 +1,5 @@
+import { signOutOfSalesforce } from "../utils/salesforceLogout";
+import { LOGIN_PATH } from "../utils/sessionConstants";
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 import {
@@ -51,12 +53,23 @@ export const useAuthStore = defineStore("auth", () => {
   async function logout(): Promise<void> {
     loading.value = true;
     try {
-      await apiLogout();
+      await signOutOfSalesforce(await apiLogout());
+    } catch {
+      // Leave anyway: a failed logout call must not keep the user on a page
+      // that still shows the previous session's Salesforce content.
     } finally {
       user.value = null;
       bootstrapped.value = false;
       loading.value = false;
     }
+
+    // Full reload drops in-memory state such as the Lightning Out script, which
+    // would otherwise keep the previous user's Salesforce session.
+    window.location.replace(LOGIN_PATH);
+
+    // The page is unloading. Never resolve, so the router.push that every view
+    // runs after logout cannot start a second navigation that races this one.
+    await new Promise<never>(() => undefined);
   }
 
   function clearError(): void {

@@ -15,12 +15,13 @@ export interface SfUserToken {
   has_refresh_token: boolean;
 }
 
+// The access and refresh tokens are held by the server and never sent to the
+// browser; this is only what the UI may display.
 export interface SfTokenResult {
   sf_username: string;
-  access_token: string;
-  refresh_token: string | null;
   instance_url: string;
   issued_at: string;
+  has_refresh_token: boolean;
   from_cache: boolean;
 }
 

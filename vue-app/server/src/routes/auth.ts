@@ -1,14 +1,16 @@
-import { Router } from "express";
+import { saveIdToken, getIdToken } from "../lib/idTokenRepository.js";
+import { endSalesforceSessions } from "../lib/sfSessionEnd.js";
+import { Router, type Request } from "express";
 import {
   signToken,
   cookieOptions,
   getCookieName,
+  verifyToken,
   type AuthUser,
   type SfAccount,
 } from "../lib/jwt.js";
 import { requireAuth } from "../middleware/requireAuth.js";
 import { validate } from "../middleware/validate.js";
-import sql from "../lib/db.js";
 import { loggedFetch, appLogger, buildBase } from "../lib/logger.js";
 import { LogRecordType } from "../lib/logTypes.js";
 import type { LogRecord, AuthEventName } from "../lib/logTypes.js";
@@ -131,13 +133,7 @@ router.post(
       const { user, idToken } = await loginWithAuth0(email, password);
 
       if (idToken) {
-        await sql`
-          INSERT INTO user_id_tokens (user_id, id_token)
-          VALUES (${user.id}, ${idToken})
-          ON CONFLICT (user_id) DO UPDATE SET
-            id_token   = EXCLUDED.id_token,
-            updated_at = now()
-        `;
+        await saveIdToken(user.id, idToken);
       }
 
       const token = signToken(user);
@@ -170,10 +166,30 @@ router.post(
 
 // ── POST /api/auth/logout ─────────────────────────────────────────────────────
 
-router.post("/logout", (req, res) => {
-  emitAuth("logout", req, { userId: req.user?.id });
+// Logout is reachable without a valid session (an expired cookie must still be
+// clearable), so the user is read from the cookie when it is still valid.
+function userIdFromSessionCookie(req: Request): string | undefined {
+  const token = req.cookies?.[getCookieName()] as string | undefined;
+  if (!token) return undefined;
+  try {
+    return verifyToken(token).sub;
+  } catch {
+    return undefined;
+  }
+}
+
+router.post("/logout", async (req, res) => {
+  const userId = userIdFromSessionCookie(req);
+  emitAuth("logout", req, { userId });
+
+  // End the Salesforce session too, otherwise the next person to sign in on this
+  // browser inherits it (Lightning Out keeps the previous user's session).
+  const salesforceLogoutUrls = userId
+    ? await endSalesforceSessions(userId).catch(() => [])
+    : [];
+
   res.clearCookie(getCookieName(), { path: "/" });
-  res.json({ message: "Logged out successfully" });
+  res.json({ message: "Logged out successfully", salesforceLogoutUrls });
 });
 
 // ── GET /api/auth/me ──────────────────────────────────────────────────────────
@@ -185,14 +201,12 @@ router.get("/me", requireAuth, (_req, res) => {
 // ── GET /api/auth/id-token ────────────────────────────────────────────────────
 
 router.get("/id-token", requireAuth, async (req, res) => {
-  const [row] = await sql<{ id_token: string }[]>`
-    SELECT id_token FROM user_id_tokens WHERE user_id = ${req.user!.id}
-  `;
-  if (!row) {
+  const idToken = await getIdToken(req.user!.id);
+  if (!idToken) {
     res.status(404).json({ error: "No ID token found" });
     return;
   }
-  res.json({ idToken: row.id_token });
+  res.json({ idToken });
 });
 
 export default router;

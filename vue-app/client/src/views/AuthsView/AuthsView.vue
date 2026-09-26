@@ -1,17 +1,26 @@
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { AppLayout, AuthCard, Button } from "@sgw/ui";
 import { useAuthStore } from "../../stores/auth";
 import { getPortals, type Portal } from "../../api/portals";
 import {
   getSfFrontdoorUrl,
+  getSfLightningOutSession,
   type FrontdoorLog,
+  type LightningOutSession,
 } from "../../api/salesforceExchange";
+import LightningOutPanel from "../../components/LightningOutPanel.vue";
+import {
+  signOutOfSalesforce,
+  salesforceLogoutUrlFor,
+} from "../../utils/salesforceLogout";
 
 const router = useRouter();
 const auth = useAuthStore();
 const portals = ref<Portal[]>([]);
+// Disabled ("coming soon") portals are not shown.
+const visiblePortals = computed(() => portals.value.filter((p) => !p.disabled));
 const launching = ref<string | null>(null);
 const openDropdownPortal = ref<string | null>(null);
 
@@ -64,6 +73,7 @@ onMounted(async () => {
 
 interface LogModal {
   open: boolean;
+  clientId: string | null;
   loading: boolean;
   visibleLines: FrontdoorLog[];
   url: string | null;
@@ -72,6 +82,7 @@ interface LogModal {
 
 const logModal = ref<LogModal>({
   open: false,
+  clientId: null,
   loading: false,
   visibleLines: [],
   url: null,
@@ -81,6 +92,7 @@ const logModal = ref<LogModal>({
 async function openLogModal(clientId: string) {
   logModal.value = {
     open: true,
+    clientId,
     loading: true,
     visibleLines: [],
     url: null,
@@ -116,6 +128,46 @@ function openSalesforce() {
   }
 }
 
+// ── Lightning Out ─────────────────────────────────────────────────────────────
+
+const lightningOut = ref<LightningOutSession | null>(null);
+
+async function openLightningOut() {
+  const clientId = logModal.value.clientId;
+  if (!clientId) return;
+  logModal.value.loading = true;
+  logModal.value.error = null;
+  try {
+    const session = await getSfLightningOutSession(clientId);
+    // This browser may already hold a Salesforce session for another user (for
+    // example an admin login in another tab). Lightning Out would reuse it and
+    // show the wrong user, so end it before mounting the new one.
+    await signOutOfSalesforce([salesforceLogoutUrlFor(session.scriptUrl)]);
+    lightningOut.value = session;
+    closeLogModal();
+  } catch (err) {
+    logModal.value.error =
+      err instanceof Error ? err.message : "Lightning Out failed";
+  } finally {
+    logModal.value.loading = false;
+  }
+}
+
+// Label of the Token Exchange login button, so the panel can point at it.
+const launchLabel = computed(() => {
+  const portal = portals.value.find((p) => p.protocol === "token-exchange");
+  return portal?.clients?.length === 1 ? portal.clients[0].label : "Login";
+});
+
+const idleMessage = computed(
+  () =>
+    `Salesforce loads here. Click “${launchLabel.value}”, then choose “Open here (Lightning Out)”.`,
+);
+
+function closeLightningOut() {
+  lightningOut.value = null;
+}
+
 function iconFor(status: FrontdoorLog["status"]) {
   if (status === "ok") return "✓";
   if (status === "cached") return "↻";
@@ -143,98 +195,114 @@ function iconFor(status: FrontdoorLog["status"]) {
         </p>
       </div>
 
-      <div class="vz-auths__grid">
-        <AuthCard
-          v-for="portal in portals"
-          :key="portal.id"
-          :title="portal.name"
-          :description="portal.description"
-          :protocol="portal.protocol"
-          :status="portal.disabled ? 'inactive' : 'active'"
-          :class="{ 'vz-auth-card--disabled': portal.disabled }"
-        >
-          <template #action>
-            <!-- Disabled -->
-            <span v-if="portal.disabled" class="vz-coming-soon"
-              >Coming soon</span
+      <div class="vz-auths__layout">
+        <div class="vz-auths__main">
+          <div class="vz-auths__grid">
+            <AuthCard
+              v-for="portal in visiblePortals"
+              :key="portal.id"
+              :title="portal.name"
+              :description="portal.description"
+              :protocol="portal.protocol"
+              :status="portal.disabled ? 'inactive' : 'active'"
+              :class="{ 'vz-auth-card--disabled': portal.disabled }"
             >
-
-            <!-- Token Exchange: single client → plain button; multiple → dropdown -->
-            <div
-              v-else-if="portal.protocol === 'token-exchange'"
-              class="vz-te-wrap"
-            >
-              <!-- Single client: just a button -->
-              <button
-                v-if="(portal.clients?.length ?? 0) <= 1"
-                class="vz-te-btn"
-                :disabled="logModal.open && logModal.loading"
-                @click="launchForClient(portal.clients![0].id)"
-              >
-                {{ portal.clients![0]?.label ?? "Login" }} ↗
-              </button>
-
-              <!-- Multiple clients: dropdown button -->
-              <div v-else class="vz-te-dropdown">
-                <button
-                  class="vz-te-btn vz-te-btn--chevron"
-                  :disabled="logModal.open && logModal.loading"
-                  @click.stop="toggleDropdown(portal.id)"
+              <template #action>
+                <!-- Disabled -->
+                <span v-if="portal.disabled" class="vz-coming-soon"
+                  >Coming soon</span
                 >
-                  <span>Login ↗</span>
-                  <svg
-                    width="10"
-                    height="10"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2.5"
-                    stroke-linecap="round"
-                  >
-                    <polyline points="6 9 12 15 18 9" />
-                  </svg>
-                </button>
-                <div v-if="openDropdownPortal === portal.id" class="vz-te-menu">
-                  <div class="vz-te-menu-header">Select organisation</div>
-                  <button
-                    v-for="c in portal.clients"
-                    :key="c.id"
-                    class="vz-te-menu-item"
-                    @click.stop="launchForClient(c.id)"
-                  >
-                    <svg
-                      class="vz-te-org-icon"
-                      width="13"
-                      height="13"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="1.75"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    >
-                      <rect x="4" y="2" width="16" height="20" rx="2" />
-                      <path d="M9 22V12h6v10" />
-                      <path d="M8 7h.01M16 7h.01M12 7h.01" />
-                      <path d="M8 11h.01M16 11h.01M12 11h.01" />
-                    </svg>
-                    {{ c.label }}
-                  </button>
-                </div>
-              </div>
-            </div>
 
-            <!-- Normal launch -->
-            <Button
-              v-else
-              variant="ghost"
-              :loading="launching === portal.id"
-              @click="launch(portal)"
-            >
-              {{ portal.name }} ↗
-            </Button>
-          </template>
-        </AuthCard>
+                <!-- Token Exchange: single client → plain button; multiple → dropdown -->
+                <div
+                  v-else-if="portal.protocol === 'token-exchange'"
+                  class="vz-te-wrap"
+                >
+                  <!-- Single client: just a button -->
+                  <button
+                    v-if="(portal.clients?.length ?? 0) <= 1"
+                    class="vz-te-btn"
+                    :disabled="logModal.open && logModal.loading"
+                    @click="launchForClient(portal.clients![0].id)"
+                  >
+                    {{ portal.clients![0]?.label ?? "Login" }} ↗
+                  </button>
+
+                  <!-- Multiple clients: dropdown button -->
+                  <div v-else class="vz-te-dropdown">
+                    <button
+                      class="vz-te-btn vz-te-btn--chevron"
+                      :disabled="logModal.open && logModal.loading"
+                      @click.stop="toggleDropdown(portal.id)"
+                    >
+                      <span>Login ↗</span>
+                      <svg
+                        width="10"
+                        height="10"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2.5"
+                        stroke-linecap="round"
+                      >
+                        <polyline points="6 9 12 15 18 9" />
+                      </svg>
+                    </button>
+                    <div
+                      v-if="openDropdownPortal === portal.id"
+                      class="vz-te-menu"
+                    >
+                      <div class="vz-te-menu-header">Select organisation</div>
+                      <button
+                        v-for="c in portal.clients"
+                        :key="c.id"
+                        class="vz-te-menu-item"
+                        @click.stop="launchForClient(c.id)"
+                      >
+                        <svg
+                          class="vz-te-org-icon"
+                          width="13"
+                          height="13"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="1.75"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        >
+                          <rect x="4" y="2" width="16" height="20" rx="2" />
+                          <path d="M9 22V12h6v10" />
+                          <path d="M8 7h.01M16 7h.01M12 7h.01" />
+                          <path d="M8 11h.01M16 11h.01M12 11h.01" />
+                        </svg>
+                        {{ c.label }}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Normal launch -->
+                <Button
+                  v-else
+                  variant="ghost"
+                  :loading="launching === portal.id"
+                  @click="launch(portal)"
+                >
+                  {{ portal.name }} ↗
+                </Button>
+              </template>
+            </AuthCard>
+          </div>
+        </div>
+
+        <!-- Lightning Out 2.0 side panel -->
+        <aside class="vz-auths__side">
+          <LightningOutPanel
+            :session="lightningOut"
+            :idle-message="idleMessage"
+            @close="closeLightningOut"
+          />
+        </aside>
       </div>
     </div>
   </AppLayout>
@@ -282,8 +350,11 @@ function iconFor(status: FrontdoorLog["status"]) {
           </div>
 
           <div v-if="logModal.url" class="sf-modal__footer">
+            <button class="sf-btn-open" @click="openLightningOut">
+              Open here (Lightning Out)
+            </button>
             <button class="sf-btn-open" @click="openSalesforce">
-              Open Salesforce ↗
+              Open in new tab ↗
             </button>
           </div>
         </div>

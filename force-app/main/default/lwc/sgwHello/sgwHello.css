@@ -1,0 +1,170 @@
+:host {
+  display: block;
+  width: 100%;
+  max-width: 38rem;
+  margin-inline: auto;
+}
+
+.card {
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  color: #16325c;
+  background: #fff;
+  border: 1px solid #e3e8ef;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 18px rgba(22, 50, 92, 0.08);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.card__banner {
+  height: 5.5rem;
+  padding: 0.75rem 1rem;
+  background: linear-gradient(135deg, #0b5cab 0%, #1b96ff 100%);
+}
+
+.card__badge {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+}
+
+.card__body {
+  padding: 0 1.5rem 1.5rem;
+}
+
+/* The avatar straddles the banner edge; the text sits just below the edge. */
+.identity {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-top: -2.4rem;
+  margin-bottom: 1.5rem;
+}
+
+.avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 4.8rem;
+  height: 4.8rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #0b5cab;
+  background: #eaf5fe;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(22, 50, 92, 0.18);
+}
+
+.identity__text {
+  min-width: 0;
+  margin-top: 2.7rem;
+}
+
+.identity__name {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.identity__sub {
+  margin: 0.2rem 0 0;
+  font-size: 0.85rem;
+  line-height: 1.3;
+  color: #5c7089;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: 1.1rem 1.5rem;
+  margin: 0;
+}
+
+.grid__item dt {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #7a8ca3;
+}
+
+.grid__item dd {
+  margin: 0.2rem 0 0;
+  font-size: 0.9rem;
+  font-weight: 500;
+  word-break: break-word;
+}
+
+.card__footer {
+  padding: 0.75rem 1.5rem;
+  font-size: 0.74rem;
+  color: #7a8ca3;
+  background: #f7f9fc;
+  border-top: 1px solid #e3e8ef;
+}
+
+.error {
+  margin: 1.2rem 0 0;
+  padding: 0.75rem 1rem;
+  font-size: 0.85rem;
+  color: #b3261e;
+  background: #fdecea;
+  border-radius: 8px;
+}
+
+/* Skeleton loader */
+.skeleton {
+  background: linear-gradient(90deg, #eef2f7 25%, #e1e8f0 37%, #eef2f7 63%);
+  background-size: 400% 100%;
+  border-radius: 6px;
+  animation: shimmer 1.4s ease infinite;
+}
+
+.skeleton--avatar {
+  flex: none;
+  width: 4.8rem;
+  height: 4.8rem;
+  border: 3px solid #fff;
+  border-radius: 50%;
+}
+
+.skeleton--title {
+  width: 9rem;
+  height: 1rem;
+}
+
+.skeleton--line {
+  width: 6rem;
+  height: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.skeleton--label {
+  width: 4rem;
+  height: 0.6rem;
+}
+
+.skeleton--value {
+  width: 80%;
+  height: 0.85rem;
+  margin-top: 0.45rem;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0 50%;
+  }
+}

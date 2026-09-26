@@ -1,3 +1,4 @@
+import { LOGIN_PATH } from "../utils/sessionConstants";
 import {
   createRouter,
   createWebHistory,
@@ -13,7 +14,7 @@ const routes: RouteRecordRaw[] = [
     meta: { requiresAuth: false },
   },
   {
-    path: "/login",
+    path: LOGIN_PATH,
     name: "login",
     component: () => import("../views/LoginView/LoginView.vue"),
     meta: { requiresAuth: false },
