@@ -125,6 +125,9 @@ export interface LightningOutSession {
   scriptUrl: string;
   appId: string;
   components: string[];
+  // Who the session belongs to, so the UI can show the signed-in identity.
+  sfUsername: string;
+  orgLabel: string;
   logs: FrontdoorLog[];
 }
 

@@ -409,7 +409,12 @@ router.get(
       );
       logs.push({ step: "Lightning Out session ready", status: "ok" });
 
-      res.json({ ...session, logs });
+      res.json({
+        ...session,
+        sfUsername: result.sf_username,
+        orgLabel: clientRow.label,
+        logs,
+      });
     } catch (err) {
       const msg =
         err instanceof Error ? err.message : "Lightning Out request failed";
