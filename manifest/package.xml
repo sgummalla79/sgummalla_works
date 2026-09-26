@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Package xmlns="http://soap.sforce.com/2006/04/metadata">
+    <!-- Group 1: Token Exchange -->
+    <types>
+        <members>WebAppTokenExchangeHandler</members>
+        <members>WebAppExtClntAppHandler</members>
+        <name>ApexClass</name>
+    </types>
+    <types>
+        <members>WebAppExtClntAppHandler</members>
+        <name>OauthTokenExchangeHandler</name>
+    </types>
+    <types>
+        <members>Auth0_JWKS</members>
+        <name>RemoteSiteSetting</name>
+    </types>
+    <!-- Groups 1 and 2: External Client Apps (token exchange + JWT bearer) -->
+    <types>
+        <members>SgummallaWorks</members>
+        <members>sgummallaworks_token_exchange</members>
+        <name>ExternalClientApplication</name>
+    </types>
+    <types>
+        <members>SgummallaWorks_glbloauth</members>
+        <members>sgummallaworks_token_exchange_glbloauth</members>
+        <name>ExtlClntAppGlobalOauthSettings</name>
+    </types>
+    <types>
+        <members>SgummallaWorks_oauth</members>
+        <members>sgummallaworks_token_exchange_oauth</members>
+        <name>ExtlClntAppOauthSettings</name>
+    </types>
+    <types>
+        <members>SgummallaWorks_oauthPlcy</members>
+        <members>sgummallaworks_token_exchange_oauthPlcy</members>
+        <name>ExtlClntAppOauthConfigurablePolicies</name>
+    </types>
+    <!-- Group 2: JWT Bearer certificate (public part only; private key never leaves the org) -->
+    <types>
+        <members>sgummalla_net_cert</members>
+        <name>Certificate</name>
+    </types>
+    <!-- Group 3: Lightning Out 2.0 -->
+    <types>
+        <members>sgwHello</members>
+        <name>LightningComponentBundle</name>
+    </types>
+    <version>62.0</version>
+</Package>

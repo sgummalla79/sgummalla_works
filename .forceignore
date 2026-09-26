@@ -1,0 +1,17 @@
+# Files the Salesforce CLI should skip when deploying or retrieving.
+# Deploy from this folder with: sf project deploy start --source-dir force-app/<path>
+
+package.xml
+
+# LWC configuration files
+**/jsconfig.json
+**/.eslintrc.json
+
+# LWC Jest tests
+**/__tests__/**
+
+# Editor and OS files
+**/.DS_Store
+**/*.ts
+.sfdx
+.sf

@@ -1,0 +1,60 @@
+<template>
+  <article class="card">
+    <header class="card__banner">
+      <span class="card__badge">Live from Salesforce</span>
+    </header>
+
+    <!-- Loading skeleton -->
+    <template lwc:if={isLoading}>
+      <div class="card__body" aria-busy="true">
+        <div class="identity">
+          <div class="skeleton skeleton--avatar"></div>
+          <div class="identity__text">
+            <div class="skeleton skeleton--title"></div>
+            <div class="skeleton skeleton--line"></div>
+          </div>
+        </div>
+        <div class="grid">
+          <template for:each={skeletonRows} for:item="row">
+            <div key={row.id} class="grid__item">
+              <div class="skeleton skeleton--label"></div>
+              <div class="skeleton skeleton--value"></div>
+            </div>
+          </template>
+        </div>
+      </div>
+    </template>
+
+    <!-- Error -->
+    <template lwc:elseif={hasError}>
+      <div class="card__body">
+        <p class="error">{errorMessage}</p>
+      </div>
+    </template>
+
+    <!-- Loaded -->
+    <template lwc:elseif={hasUser}>
+      <div class="card__body">
+        <div class="identity">
+          <div class="avatar">{initials}</div>
+          <div class="identity__text">
+            <h2 class="identity__name">{name}</h2>
+            <p class="identity__sub">{subtitle}</p>
+          </div>
+        </div>
+        <dl class="grid">
+          <template for:each={details} for:item="item">
+            <div key={item.label} class="grid__item">
+              <dt>{item.label}</dt>
+              <dd>{item.value}</dd>
+            </div>
+          </template>
+        </dl>
+      </div>
+      <footer class="card__footer">
+        Rendered by a Lightning web component running inside this app via
+        Lightning Out 2.0.
+      </footer>
+    </template>
+  </article>
+</template>

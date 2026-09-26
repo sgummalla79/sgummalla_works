@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ExtlClntAppConfigurablePolicies xmlns="http://soap.sforce.com/2006/04/metadata">
+    <externalClientApplication>sgummallaworks_token_exchange</externalClientApplication>
+    <isEnabled>true</isEnabled>
+    <isOauthPluginEnabled>true</isOauthPluginEnabled>
+    <label>sgummallaworks_token_exchange_plcy</label>
+    <startPage>None</startPage>
+</ExtlClntAppConfigurablePolicies>
