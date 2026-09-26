@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import { ref, computed, watch, onBeforeUnmount } from "vue";
+import { ref, computed, watch, onMounted, onBeforeUnmount } from "vue";
 import type { LightningOutSession } from "../api/salesforceExchange";
 import {
-  mountLightningOut,
-  waitForLightningOutComponents,
-} from "../utils/lightningOut";
+  HOST_MESSAGE,
+  LIGHTNING_OUT_HOST_PATH,
+  type HostToPanel,
+  type PanelToHost,
+} from "../utils/lightningOutFrameProtocol";
 
 const props = defineProps<{
   session: LightningOutSession | null;
@@ -30,34 +32,53 @@ const initial = computed(
   () => props.session?.sfUsername.charAt(0).toUpperCase() ?? "",
 );
 
-const container = ref<HTMLElement | null>(null);
+const frame = ref<HTMLIFrameElement | null>(null);
 const error = ref<string | null>(null);
 const loading = ref(false);
 
-// (Re)mount whenever a new session arrives; clear when it is dropped.
+// Changing the key replaces the frame with a brand-new one. Each frame is its own
+// JavaScript world, so every connect gets a clean Lightning Out runtime.
+const frameKey = ref(0);
+
 watch(
   () => props.session,
-  async (session) => {
+  (session) => {
     error.value = null;
-    container.value?.replaceChildren();
-    if (!session || !container.value) {
-      loading.value = false;
-      return;
-    }
-    loading.value = true;
-    try {
-      await mountLightningOut(container.value, session);
-      await waitForLightningOutComponents(session.components);
-    } catch (err) {
-      error.value =
-        err instanceof Error ? err.message : "Lightning Out failed to load";
-    } finally {
-      loading.value = false;
-    }
+    loading.value = Boolean(session);
+    if (session) frameKey.value += 1;
   },
 );
 
-onBeforeUnmount(() => container.value?.replaceChildren());
+// Plain copy of only what the host needs (a reactive proxy cannot be posted).
+function toMountable(session: LightningOutSession): PanelToHost {
+  return {
+    type: HOST_MESSAGE.MOUNT,
+    session: {
+      frontdoorUrl: session.frontdoorUrl,
+      scriptUrl: session.scriptUrl,
+      appId: session.appId,
+      components: [...session.components],
+    },
+  };
+}
+
+function onFrameMessage(event: MessageEvent) {
+  const target = frame.value?.contentWindow;
+  // Only our own frame, same origin.
+  if (!target || event.source !== target) return;
+  if (event.origin !== window.location.origin) return;
+
+  const message = event.data as HostToPanel | undefined;
+  if (message?.type === HOST_MESSAGE.READY && props.session) {
+    target.postMessage(toMountable(props.session), window.location.origin);
+  } else if (message?.type === HOST_MESSAGE.STATUS) {
+    loading.value = false;
+    if (message.state === "error") error.value = message.message;
+  }
+}
+
+onMounted(() => window.addEventListener("message", onFrameMessage));
+onBeforeUnmount(() => window.removeEventListener("message", onFrameMessage));
 </script>
 
 <template>
@@ -122,10 +143,18 @@ onBeforeUnmount(() => container.value?.replaceChildren());
 
     <div class="lo-panel__stage">
       <div
-        ref="container"
         class="lo-panel__body"
         :class="{ 'lo-panel__body--hidden': !session }"
-      />
+      >
+        <iframe
+          v-if="session"
+          :key="frameKey"
+          ref="frame"
+          class="lo-panel__frame"
+          :src="LIGHTNING_OUT_HOST_PATH"
+          title="Salesforce Lightning Out"
+        />
+      </div>
 
       <!-- Idle -->
       <div v-if="!session" class="lo-panel__state">
@@ -373,9 +402,6 @@ onBeforeUnmount(() => container.value?.replaceChildren());
 .lo-panel__body {
   flex: 1;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 2rem 1.25rem;
   background-color: var(--vz-bg);
   background-image:
     radial-gradient(
@@ -391,6 +417,17 @@ onBeforeUnmount(() => container.value?.replaceChildren());
 
 .lo-panel__body--hidden {
   display: none;
+}
+
+/* The host page paints nothing, so the dark stage shows through. color-scheme is
+   pinned to the host page's own so the browser does not give the frame an opaque
+   background when the app theme sets a different one. */
+.lo-panel__frame {
+  flex: 1;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color-scheme: normal;
 }
 
 .lo-panel__state {

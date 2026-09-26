@@ -19,6 +19,11 @@ export default defineConfig({
     rollupOptions: {
       // vue-router is provided by the app — treat as external when bundling @sgw/ui source
       external: [],
+      // Two pages: the app, and the isolated Lightning Out host frame.
+      input: {
+        main: resolve(__dirname, "index.html"),
+        lightningOutHost: resolve(__dirname, "lightning-out-host.html"),
+      },
     },
   },
 });
