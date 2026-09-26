@@ -1,3 +1,4 @@
+import { POST_LOGIN_PATH } from "../lib/routePaths.js";
 import { saveIdToken } from "../lib/idTokenRepository.js";
 import { Router, type Request, type Response } from "express";
 import { Issuer, type TokenSet, type UserinfoResponse } from "openid-client";
@@ -292,7 +293,7 @@ router.get("/callback", async (req: Request, res: Response) => {
       userId: user.id,
       email: user.email,
     });
-    res.redirect("/auths");
+    res.redirect(POST_LOGIN_PATH);
   } catch (err) {
     emitAuth("login_failed", req, {
       provider: "auth0",
@@ -368,7 +369,7 @@ router.get("/link", async (req: Request, res: Response) => {
         email: data.email,
       });
       res.cookie(getCookieName(), sessionToken, cookieOptions());
-      res.redirect("/auths");
+      res.redirect(POST_LOGIN_PATH);
       return;
     }
 
@@ -414,7 +415,7 @@ router.get("/link", async (req: Request, res: Response) => {
     emitAuth("account_linked", req, { userId: user.id, email: user.email });
     const sessionToken = signToken(user);
     res.cookie(getCookieName(), sessionToken, cookieOptions());
-    res.redirect("/auths");
+    res.redirect(POST_LOGIN_PATH);
   } catch (err) {
     emitAuth("login_failed", req, {
       error: err instanceof Error ? err.message : "link_failed",

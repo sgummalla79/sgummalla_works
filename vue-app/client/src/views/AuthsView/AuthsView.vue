@@ -131,6 +131,8 @@ function openSalesforce() {
 // ── Lightning Out ─────────────────────────────────────────────────────────────
 
 const lightningOut = ref<LightningOutSession | null>(null);
+// The client the embedded session belongs to, for the panel's header actions.
+const lightningClientId = ref<string | null>(null);
 
 async function openLightningOut() {
   const clientId = logModal.value.clientId;
@@ -144,6 +146,7 @@ async function openLightningOut() {
     // show the wrong user, so end it before mounting the new one.
     await signOutOfSalesforce([salesforceLogoutUrlFor(session.scriptUrl)]);
     lightningOut.value = session;
+    lightningClientId.value = clientId;
     closeLogModal();
   } catch (err) {
     logModal.value.error =
@@ -153,19 +156,65 @@ async function openLightningOut() {
   }
 }
 
-// Label of the Token Exchange login button, so the panel can point at it.
+// Text of the Token Exchange connect button, so the panel can point at it.
+function connectLabelFor(label?: string): string {
+  return label ? `Connect · ${label}` : "Connect";
+}
+
 const launchLabel = computed(() => {
   const portal = portals.value.find((p) => p.protocol === "token-exchange");
-  return portal?.clients?.length === 1 ? portal.clients[0].label : "Login";
+  return connectLabelFor(
+    portal?.clients?.length === 1 ? portal.clients[0].label : undefined,
+  );
 });
+
+// True while a Lightning Out session is open for one of this portal's clients.
+function isConnected(portal: Portal): boolean {
+  return (
+    lightningOut.value !== null &&
+    (portal.clients ?? []).some((c) => c.id === lightningClientId.value)
+  );
+}
 
 const idleMessage = computed(
   () =>
     `Salesforce loads here. Click “${launchLabel.value}”, then choose “Open here (Lightning Out)”.`,
 );
 
+// Lightning Out 2.0 cannot be re-initialised inside a page: its script keeps the
+// first session and a spent single-use frontdoor URL, so a later connect shows
+// Salesforce's login page, which refuses to be framed ("refused to connect").
+// Reloading gives the next connect a clean runtime.
 function closeLightningOut() {
   lightningOut.value = null;
+  lightningClientId.value = null;
+  window.location.reload();
+}
+
+// Ends the browser's Salesforce session for this org and clears the panel.
+async function signOutOfLightningOut() {
+  const session = lightningOut.value;
+  if (!session) return;
+  await signOutOfSalesforce([salesforceLogoutUrlFor(session.scriptUrl)]);
+  closeLightningOut();
+}
+
+// Opens the same org in a full Salesforce tab. The tab is opened straight away,
+// inside the click, so the browser does not treat it as a blocked pop-up while
+// the fresh frontdoor URL is fetched.
+async function openLightningOutInTab() {
+  const clientId = lightningClientId.value;
+  if (!clientId) return;
+  const tab = window.open("", "_blank");
+  try {
+    const { url } = await getSfFrontdoorUrl(clientId);
+    if (tab) {
+      tab.opener = null;
+      tab.location.href = url;
+    }
+  } catch {
+    tab?.close();
+  }
 }
 
 function iconFor(status: FrontdoorLog["status"]) {
@@ -188,13 +237,6 @@ function iconFor(status: FrontdoorLog["status"]) {
     @usage="router.push({ name: 'dashboard' })"
   >
     <div class="vz-auths">
-      <div class="vz-auths__section-header">
-        <h1 class="vz-auths__title">Integrations</h1>
-        <p class="vz-auths__sub">
-          Configured authentication integrations and their entry points.
-        </p>
-      </div>
-
       <div class="vz-auths__layout">
         <div class="vz-auths__main">
           <div class="vz-auths__grid">
@@ -213,6 +255,23 @@ function iconFor(status: FrontdoorLog["status"]) {
                   >Coming soon</span
                 >
 
+                <!-- Token Exchange, connected: who is signed in -->
+                <div
+                  v-else-if="
+                    portal.protocol === 'token-exchange' && isConnected(portal)
+                  "
+                  class="vz-te-connected"
+                >
+                  <span
+                    class="vz-te-connected__who"
+                    :title="lightningOut?.sfUsername"
+                  >
+                    <span class="vz-te-connected__dot" />
+                    Connected as
+                    <strong>{{ lightningOut?.sfUsername }}</strong>
+                  </span>
+                </div>
+
                 <!-- Token Exchange: single client → plain button; multiple → dropdown -->
                 <div
                   v-else-if="portal.protocol === 'token-exchange'"
@@ -225,7 +284,7 @@ function iconFor(status: FrontdoorLog["status"]) {
                     :disabled="logModal.open && logModal.loading"
                     @click="launchForClient(portal.clients![0].id)"
                   >
-                    {{ portal.clients![0]?.label ?? "Login" }} ↗
+                    {{ connectLabelFor(portal.clients![0]?.label) }}
                   </button>
 
                   <!-- Multiple clients: dropdown button -->
@@ -235,7 +294,7 @@ function iconFor(status: FrontdoorLog["status"]) {
                       :disabled="logModal.open && logModal.loading"
                       @click.stop="toggleDropdown(portal.id)"
                     >
-                      <span>Login ↗</span>
+                      <span>Connect</span>
                       <svg
                         width="10"
                         height="10"
@@ -301,6 +360,8 @@ function iconFor(status: FrontdoorLog["status"]) {
             :session="lightningOut"
             :idle-message="idleMessage"
             @close="closeLightningOut"
+            @open-tab="openLightningOutInTab"
+            @sign-out="signOutOfLightningOut"
           />
         </aside>
       </div>

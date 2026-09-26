@@ -16,97 +16,105 @@
   }
 }
 
-.vz-auths__section-header {
-  margin-bottom: 1.5rem;
-}
-
-.vz-auths__title {
-  font-size: 2rem;
-  font-weight: 600;
-  letter-spacing: -0.03em;
-  color: var(--vz-text);
-  margin-bottom: 0.4rem;
-  line-height: 1;
-}
-
-.vz-auths__sub {
-  font-size: 0.92rem;
-  color: var(--vz-text2);
-  line-height: 1.6;
-}
-
-/* Cards rail on the left (fixed, readable width); the Salesforce panel takes
-   all remaining space and stays in view while the page scrolls. */
+/* Integrations sit in a slim strip on top; the Salesforce panel takes the full
+   width below, so the embedded component has room and the cards stay compact. */
 .vz-auths__layout {
-  display: grid;
-  grid-template-columns: clamp(280px, 24vw, 340px) minmax(0, 1fr);
+  display: flex;
+  flex-direction: column;
   gap: 1.5rem;
-  align-items: stretch;
 }
 
+/* The panel fills the rest of the viewport under the strip, with a floor so the
+   embedded component always has room. */
 .vz-auths__side {
-  position: sticky;
-  top: 1rem;
-  align-self: start;
-  height: calc(100dvh - 15rem);
-  min-height: 24rem;
+  height: max(40rem, calc(100dvh - 11rem));
 }
 
 .vz-auths__side :deep(.lo-panel) {
   height: 100%;
 }
 
-@media (max-width: 1000px) {
-  .vz-auths__layout {
-    grid-template-columns: 1fr;
-  }
-  .vz-auths__side {
-    position: static;
-    height: auto;
-    min-height: 26rem;
-  }
-}
-
 .vz-auths__grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 1.25rem;
-  margin-bottom: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(22rem, 1fr));
+  gap: 1rem;
 }
 
+/* Each card is one horizontal bar: tag + status | title + description | action */
 .vz-auths__grid :deep(.vz-auth-card) {
   border: 1px solid var(--vz-border);
   border-radius: var(--vz-radius-md);
-  padding: 1.25rem 1.5rem;
-  gap: 0.6rem;
-  aspect-ratio: 1 / 1.2;
-  overflow: hidden;
+  padding: 0.9rem 1.25rem;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) minmax(8.5rem, auto);
+  grid-template-areas:
+    "top title action"
+    "top desc  action";
+  column-gap: 1.25rem;
+  row-gap: 0.15rem;
+  align-items: center;
+  /* Visible so the organisation dropdown is not clipped by the slim card */
+  overflow: visible;
 }
 
-.vz-auths__grid :deep(.vz-auth-card__tag) {
-  white-space: nowrap;
+.vz-auths__grid :deep(.vz-auth-card__top) {
+  grid-area: top;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.4rem;
 }
 
 .vz-auths__grid :deep(.vz-auth-card__title) {
-  font-size: 1.05rem;
+  grid-area: title;
+  font-size: 1.02rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .vz-auths__grid :deep(.vz-auth-card__desc) {
-  font-size: 0.9rem;
-  line-height: 1.55;
+  grid-area: desc;
+  font-size: 0.85rem;
+  line-height: 1.45;
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   overflow: hidden;
 }
 
-/* Pin action row to a fixed height so all tiles align at the bottom */
 .vz-auths__grid :deep(.vz-auth-card__action) {
-  margin-top: auto;
-  padding-top: 0.75rem;
-  min-height: 2.25rem;
+  grid-area: action;
+  margin: 0;
+  padding: 0;
+  min-height: 0;
   display: flex;
   align-items: center;
+}
+
+@media (max-width: 700px) {
+  .vz-auths__grid {
+    grid-template-columns: 1fr;
+  }
+  .vz-auths__grid :deep(.vz-auth-card) {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "top"
+      "title"
+      "desc"
+      "action";
+  }
+  .vz-auths__grid :deep(.vz-auth-card__top) {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .vz-auths__grid :deep(.vz-auth-card__action) {
+    padding-top: 0.5rem;
+  }
+}
+
+.vz-auths__grid :deep(.vz-auth-card__tag) {
+  white-space: nowrap;
 }
 
 /* Disabled tiles */
@@ -169,6 +177,42 @@
 .vz-te-btn:disabled {
   opacity: 0.4;
   cursor: not-allowed;
+}
+
+/* Connected state: who is signed in */
+.vz-te-connected {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  width: 100%;
+  min-width: 0;
+}
+
+.vz-te-connected__who {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+  font-size: 0.74rem;
+  color: var(--vz-text2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.vz-te-connected__who strong {
+  color: var(--vz-text);
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.vz-te-connected__dot {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--vz-green);
 }
 
 .vz-te-menu {

@@ -7,11 +7,14 @@ const props = defineProps<{
   themeMode?: "dark" | "light";
   guest?: boolean;
   isOwner?: boolean;
+  // Sub-items shown under "Configuration"
+  configurationLinks?: Array<{ label: string; href: string }>;
 }>();
 
 const emit = defineEmits<{
   profile: [];
   configuration: [];
+  navigate: [href: string];
   "article-drafts": [];
   usage: [];
   logout: [];
@@ -149,32 +152,67 @@ onUnmounted(() =>
             Article Drafts
           </button>
 
-          <button
-            class="vz-avatar-item"
-            @click="
-              () => {
-                open = false;
-                $emit('configuration');
-              }
-            "
-          >
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.5"
-              stroke-linecap="round"
-              stroke-linejoin="round"
+          <div class="vz-avatar-sub-wrap">
+            <button
+              class="vz-avatar-item"
+              @click="
+                () => {
+                  open = false;
+                  $emit('configuration');
+                }
+              "
             >
-              <circle cx="12" cy="12" r="3" />
-              <path
-                d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"
-              />
-            </svg>
-            Configuration
-          </button>
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <circle cx="12" cy="12" r="3" />
+                <path
+                  d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"
+                />
+              </svg>
+              Configuration
+              <template v-if="configurationLinks?.length">
+                <span class="vz-avatar-item__spacer" />
+                <svg
+                  width="11"
+                  height="11"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+              </template>
+            </button>
+            <div v-if="configurationLinks?.length" class="vz-avatar-sub-panel">
+              <div class="vz-avatar-sub-inner">
+                <button
+                  v-for="link in configurationLinks"
+                  :key="link.href"
+                  class="vz-avatar-item vz-avatar-item--sub"
+                  @click="
+                    () => {
+                      open = false;
+                      $emit('navigate', link.href);
+                    }
+                  "
+                >
+                  {{ link.label }}
+                </button>
+              </div>
+            </div>
+          </div>
         </template>
 
         <!-- Theme color picker -->
@@ -502,6 +540,33 @@ onUnmounted(() =>
   background: rgba(255, 255, 255, 0.15);
   border-color: rgba(255, 255, 255, 0.3);
   color: #fff;
+}
+
+/* ── Configuration sub-menu (expands on hover / keyboard focus) ── */
+.vz-avatar-sub-wrap {
+  position: relative;
+}
+
+.vz-avatar-sub-panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  background: var(--vz-surface);
+  transition: grid-template-rows 0.25s ease;
+}
+
+.vz-avatar-sub-wrap:hover .vz-avatar-sub-panel,
+.vz-avatar-sub-wrap:focus-within .vz-avatar-sub-panel {
+  grid-template-rows: 1fr;
+}
+
+.vz-avatar-sub-inner {
+  overflow: hidden;
+  min-height: 0;
+}
+
+.vz-avatar-item--sub {
+  padding: 0.55rem 1rem 0.55rem 2.6rem;
+  font-size: 0.82rem;
 }
 
 /* ── Theme color picker ── */
