@@ -19,8 +19,10 @@ const routes: RouteRecordRaw[] = [
     component: () => import("../views/LoginView/LoginView.vue"),
     meta: { requiresAuth: false },
   },
+  // Old URL kept so existing bookmarks and links still work.
+  { path: "/auths", redirect: "/demos" },
   {
-    path: "/auths",
+    path: "/demos",
     name: "auths",
     component: () => import("../views/AuthsView/AuthsView.vue"),
     meta: { requiresAuth: true },
@@ -29,7 +31,7 @@ const routes: RouteRecordRaw[] = [
     path: "/configuration",
     name: "configuration",
     component: () => import("../views/ConfigurationView/ConfigurationView.vue"),
-    meta: { requiresAuth: true, ownerOnly: true },
+    meta: { requiresAuth: true },
   },
   {
     path: "/salesforce/jwtbearer",

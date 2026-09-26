@@ -1,3 +1,4 @@
+import { POST_LOGIN_PATH } from "../lib/routePaths.js";
 import { Router } from "express";
 import passport from "passport";
 import {
@@ -103,7 +104,7 @@ router.post("/callback", (req, res, next) => {
 
       const token = signToken(user as unknown as AuthUser);
       res.cookie(getCookieName(), token, cookieOptions());
-      res.redirect("/auths");
+      res.redirect(POST_LOGIN_PATH);
     },
   )(req, res, next);
 });

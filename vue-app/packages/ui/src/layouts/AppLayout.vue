@@ -14,18 +14,12 @@ import lightbulbRaw from "../assets/lightbulb.svg?raw";
 // ── Nav tiers — single source of truth ───────────────────────────────────────
 // Add / remove items here only. No view should build its own nav list.
 
-const DEMOS_NAV = [
-  { name: "auths", label: "Integrations", href: "/auths" },
-  {
-    name: "salesforce",
-    label: "JWT Bearer Auth",
-    href: "/salesforce/jwtbearer",
-  },
-  {
-    name: "salesforce-exchange",
-    label: "Token Exchange Auth",
-    href: "/salesforce/token-exchange",
-  },
+const DEMOS_NAV = [{ name: "auths", label: "Lightning Out", href: "/demos" }];
+
+// Sub-items of "Configuration" in the avatar menu.
+const CONFIGURATION_LINKS = [
+  { label: "JWT Bearer Auth", href: "/salesforce/jwtbearer" },
+  { label: "Token Exchange Auth", href: "/salesforce/token-exchange" },
 ];
 
 withDefaults(
@@ -63,6 +57,10 @@ function handleProfile() {
 
 function handleConfiguration() {
   router.push("/configuration");
+}
+
+function handleNavigate(href: string) {
+  router.push(href);
 }
 
 function handleArticleDrafts() {
@@ -190,7 +188,7 @@ async function handleThemeColor(color: string) {
               <rect x="14" y="14" width="7" height="7" rx="1" />
             </svg>
           </template>
-          <NavLink href="/auths" :active="activePage === 'auths'">
+          <NavLink href="/demos" :active="activePage === 'auths'">
             <svg
               width="14"
               height="14"
@@ -208,48 +206,7 @@ async function handleThemeColor(color: string) {
                 d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"
               />
             </svg>
-            Integrations
-          </NavLink>
-          <NavLink
-            href="/salesforce/jwtbearer"
-            :active="activePage === 'salesforce'"
-          >
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.75"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <circle cx="7.5" cy="15.5" r="5.5" />
-              <path d="m21 2-9.6 9.6" />
-              <path d="m15.5 7.5 3 3L22 7l-3-3" />
-            </svg>
-            JWT Bearer Auth
-          </NavLink>
-          <NavLink
-            href="/salesforce/token-exchange"
-            :active="activePage === 'salesforce-exchange'"
-          >
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.75"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <path d="m16 3 4 4-4 4" />
-              <path d="M20 7H4" />
-              <path d="m8 21-4-4 4-4" />
-              <path d="M4 17h16" />
-            </svg>
-            Token Exchange Auth
+            Lightning Out
           </NavLink>
         </NavGroup>
 
@@ -303,7 +260,9 @@ async function handleThemeColor(color: string) {
           :theme-mode="themeMode"
           :is-owner="!!isOwner"
           @profile="handleProfile"
+          :configuration-links="CONFIGURATION_LINKS"
           @configuration="handleConfiguration"
+          @navigate="handleNavigate"
           @article-drafts="handleArticleDrafts"
           @logout="emit('logout')"
           @toggle-theme="toggleTheme"
