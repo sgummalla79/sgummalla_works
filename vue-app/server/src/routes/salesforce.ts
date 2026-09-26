@@ -33,6 +33,12 @@ import {
   type SfTokenResponse,
 } from "../lib/sfBearerFlow.js";
 import { upsertSfToken, getValidSfToken } from "../lib/sfTokenDb.js";
+import { findOwnedJwtBearerClient } from "../lib/sfClientRepository.js";
+import { normalizeSalesforceOrigin } from "../lib/sfHostAllowlist.js";
+import { toPublicSfToken } from "../lib/sfTokenPresenter.js";
+
+// Same response for "missing" and "not yours" so ids cannot be probed.
+const CLIENT_NOT_FOUND = "Client not found";
 
 const router: Router = Router();
 router.use(requireAuth);
@@ -83,10 +89,18 @@ router.post("/clients", async (req: Request, res: Response) => {
     return;
   }
 
+  let loginOrigin: string;
+  try {
+    loginOrigin = normalizeSalesforceOrigin(login_url, "login_url");
+  } catch (err) {
+    res.status(400).json({ error: (err as Error).message });
+    return;
+  }
+
   try {
     const [row] = await sql`
       INSERT INTO sf_clients (label, client_id, login_url, private_key, flow_type, user_id)
-      VALUES (${label}, ${client_id}, ${login_url}, ${private_key}, 'jwt_bearer', ${userId})
+      VALUES (${label}, ${client_id}, ${loginOrigin}, ${private_key}, 'jwt_bearer', ${userId})
       RETURNING id, label, client_id, login_url, created_at
     `;
     res.status(201).json(row);
@@ -124,6 +138,16 @@ router.patch("/clients/:id", async (req: Request, res: Response) => {
     return;
   }
 
+  let loginOrigin: string | undefined;
+  if (login_url) {
+    try {
+      loginOrigin = normalizeSalesforceOrigin(login_url, "login_url");
+    } catch (err) {
+      res.status(400).json({ error: (err as Error).message });
+      return;
+    }
+  }
+
   try {
     const [existing] =
       await sql`SELECT client_id FROM sf_clients WHERE id = ${id} AND user_id = ${userId}`;
@@ -137,7 +161,7 @@ router.patch("/clients/:id", async (req: Request, res: Response) => {
       UPDATE sf_clients SET
         label       = COALESCE(${label ?? null}, label),
         client_id   = COALESCE(${client_id ?? null}, client_id),
-        login_url   = COALESCE(${login_url ?? null}, login_url),
+        login_url   = COALESCE(${loginOrigin ?? null}, login_url),
         private_key = CASE
           WHEN ${private_key ?? ""} = '' THEN private_key
           ELSE ${private_key ?? ""}
@@ -193,6 +217,10 @@ const upsertToken = (
 router.get("/clients/:id/tokens", async (req: Request, res: Response) => {
   const { id } = req.params;
   try {
+    if (!(await findOwnedJwtBearerClient(id, req.user!.id))) {
+      res.status(404).json({ error: CLIENT_NOT_FOUND });
+      return;
+    }
     const rows = await sql`
       SELECT sf_username, instance_url, issued_at,
              (refresh_token IS NOT NULL) AS has_refresh_token
@@ -215,6 +243,10 @@ router.delete(
   async (req: Request, res: Response) => {
     const { id, sf_username } = req.params;
     try {
+      if (!(await findOwnedJwtBearerClient(id, req.user!.id))) {
+        res.status(404).json({ error: CLIENT_NOT_FOUND });
+        return;
+      }
       const [row] = await sql`
         DELETE FROM sf_tokens
         WHERE client_db_id = ${id} AND sf_username = ${sf_username}
@@ -245,12 +277,10 @@ router.post("/clients/:id/token", async (req: Request, res: Response) => {
   }
 
   try {
-    const [client] = await sql`
-      SELECT client_id, login_url, private_key FROM sf_clients WHERE id = ${id}
-    `;
+    const client = await findOwnedJwtBearerClient(id, req.user!.id);
 
     if (!client) {
-      res.status(404).json({ error: "Client not found" });
+      res.status(404).json({ error: CLIENT_NOT_FOUND });
       return;
     }
 
@@ -266,16 +296,16 @@ router.post("/clients/:id/token", async (req: Request, res: Response) => {
         Date.now() - start,
         { fromCache: true },
       );
-      res.json({ sf_username, ...saved, from_cache: true });
+      res.json(toPublicSfToken(sf_username, saved, true));
       return;
     }
 
     // Mint fresh token via JWT Bearer
     const token = await mintAndExchangeJWT(
-      client.client_id as string,
+      client.client_id,
       sf_username,
-      client.login_url as string,
-      client.private_key as string,
+      client.login_url,
+      client.private_key,
     );
 
     emitSfOp(
@@ -287,7 +317,7 @@ router.post("/clients/:id/token", async (req: Request, res: Response) => {
       { fromCache: false },
     );
     const row = await upsertToken(id, sf_username, token);
-    res.json({ sf_username, ...row, from_cache: false });
+    res.json(toPublicSfToken(sf_username, row, false));
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Token exchange failed";
     res.status(400).json({ error: msg });
@@ -309,12 +339,10 @@ router.post(
     }
 
     try {
-      const [client] = await sql`
-      SELECT client_id, login_url, private_key FROM sf_clients WHERE id = ${id}
-    `;
+      const client = await findOwnedJwtBearerClient(id, req.user!.id);
 
       if (!client) {
-        res.status(404).json({ error: "Client not found" });
+        res.status(404).json({ error: CLIENT_NOT_FOUND });
         return;
       }
 
@@ -329,29 +357,29 @@ router.post(
         try {
           token = await refreshAccessToken(
             saved.refresh_token as string,
-            client.client_id as string,
-            client.login_url as string,
+            client.client_id,
+            client.login_url,
           );
         } catch {
           // Refresh token expired or revoked — fall back to JWT re-mint
           token = await mintAndExchangeJWT(
-            client.client_id as string,
+            client.client_id,
             sf_username,
-            client.login_url as string,
-            client.private_key as string,
+            client.login_url,
+            client.private_key,
           );
         }
       } else {
         token = await mintAndExchangeJWT(
-          client.client_id as string,
+          client.client_id,
           sf_username,
-          client.login_url as string,
-          client.private_key as string,
+          client.login_url,
+          client.private_key,
         );
       }
 
       const row = await upsertToken(id, sf_username, token);
-      res.json({ sf_username, ...row, from_cache: false });
+      res.json(toPublicSfToken(sf_username, row, false));
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Token refresh failed";
       res.status(400).json({ error: msg });
@@ -374,12 +402,10 @@ router.post("/clients/:id/query", async (req: Request, res: Response) => {
   }
 
   try {
-    const [client] = await sql`
-      SELECT client_id, login_url, private_key FROM sf_clients WHERE id = ${id}
-    `;
+    const client = await findOwnedJwtBearerClient(id, req.user!.id);
 
     if (!client) {
-      res.status(404).json({ error: "Client not found" });
+      res.status(404).json({ error: CLIENT_NOT_FOUND });
       return;
     }
 
@@ -387,16 +413,20 @@ router.post("/clients/:id/query", async (req: Request, res: Response) => {
     let tokenRow = await getValidSfToken(id, sf_username);
     if (!tokenRow) {
       const token = await mintAndExchangeJWT(
-        client.client_id as string,
+        client.client_id,
         sf_username,
-        client.login_url as string,
-        client.private_key as string,
+        client.login_url,
+        client.private_key,
       );
       tokenRow = await upsertToken(id, sf_username, token);
     }
 
     const queryStart = Date.now();
-    const queryUrl = `${tokenRow.instance_url}/services/data/v62.0/query?q=${encodeURIComponent(soql)}`;
+    const instanceOrigin = normalizeSalesforceOrigin(
+      tokenRow.instance_url as string,
+      "instance_url",
+    );
+    const queryUrl = `${instanceOrigin}/services/data/v62.0/query?q=${encodeURIComponent(soql)}`;
     const sfRes = await fetch(queryUrl, {
       redirect: "error",
       headers: { Authorization: `Bearer ${tokenRow.access_token}` },

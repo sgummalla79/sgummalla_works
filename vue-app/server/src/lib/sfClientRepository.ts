@@ -22,3 +22,21 @@ export async function findOwnedExchangeClient(
   `;
   return (row as OwnedExchangeClient | undefined) ?? null;
 }
+
+export interface OwnedJwtBearerClient extends OwnedExchangeClient {
+  private_key: string;
+}
+
+// Same ownership rule for JWT bearer clients, which additionally carry the
+// private key used to sign assertions on the user's behalf.
+export async function findOwnedJwtBearerClient(
+  id: string,
+  userId: string,
+): Promise<OwnedJwtBearerClient | null> {
+  const [row] = await sql`
+    SELECT id, label, client_id, login_url, private_key
+    FROM sf_clients
+    WHERE id = ${id} AND flow_type = 'jwt_bearer' AND user_id = ${userId}
+  `;
+  return (row as OwnedJwtBearerClient | undefined) ?? null;
+}

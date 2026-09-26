@@ -1,8 +1,5 @@
-import { logger } from "./logger.js";
-import {
-  assertSalesforceUrl,
-  normalizeSalesforceOrigin,
-} from "./sfHostAllowlist.js";
+import { normalizeSalesforceOrigin } from "./sfHostAllowlist.js";
+import { requestFrontdoorUri } from "./sfFrontdoor.js";
 import {
   LIGHTNING_OUT_SCRIPT_PATH,
   LIGHTNING_OUT_SINGLE_ACCESS_PATH,
@@ -42,34 +39,12 @@ export async function requestLightningOutSession(
   config: LightningOutConfig,
 ): Promise<LightningOutSession> {
   const base = normalizeSalesforceOrigin(instanceUrl, "instance_url");
-  const res = await fetch(`${base}${LIGHTNING_OUT_SINGLE_ACCESS_PATH}`, {
-    method: "POST",
-    redirect: "error",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({
-      access_token: accessToken,
-      lightning_out_app_id: config.appId,
-    }),
-  });
-
-  const text = await res.text();
-  if (!res.ok) {
-    logger.error("SF Lightning Out — frontdoor request failed", {
-      status: res.status,
-      body: text,
-    });
-    throw new Error(`Lightning Out session failed (HTTP ${res.status})`);
-  }
-
-  const { frontdoor_uri } = JSON.parse(text) as { frontdoor_uri?: string };
-  if (!frontdoor_uri)
-    throw new Error("Lightning Out returned no frontdoor URL");
-
-  // The browser navigates to this URL, so it must also be a Salesforce host.
-  const frontdoorUrl = assertSalesforceUrl(
-    frontdoor_uri,
-    "frontdoor_uri",
-  ).toString();
+  const frontdoorUrl = await requestFrontdoorUri(
+    base,
+    LIGHTNING_OUT_SINGLE_ACCESS_PATH,
+    accessToken,
+    { lightning_out_app_id: config.appId },
+  );
 
   return {
     frontdoorUrl,

@@ -35,6 +35,9 @@ import {
 import { refreshAccessToken } from "../lib/sfBearerFlow.js";
 import { upsertSfToken, getValidSfToken } from "../lib/sfTokenDb.js";
 import { findOwnedExchangeClient } from "../lib/sfClientRepository.js";
+import { requestFrontdoorUri } from "../lib/sfFrontdoor.js";
+import { toPublicSfToken } from "../lib/sfTokenPresenter.js";
+import { SINGLE_ACCESS_PATH } from "../lib/lightningOutConstants.js";
 import { normalizeSalesforceOrigin } from "../lib/sfHostAllowlist.js";
 
 // Same response for "missing" and "not yours" so ids cannot be probed.
@@ -296,7 +299,7 @@ router.post("/clients/:id/token", async (req: Request, res: Response) => {
     emitSfOp("token_acquire", id, sf_username, userId, Date.now() - start, {
       fromCache: false,
     });
-    res.json({ sf_username, ...row, from_cache: false });
+    res.json(toPublicSfToken(sf_username, row, false));
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Token exchange failed";
     res.status(400).json({ error: msg });
@@ -358,8 +361,13 @@ router.get("/clients/:id/frontdoor", async (req: Request, res: Response) => {
       status: "ok",
     });
 
-    // 4 — Construct FrontDoor URL
-    const url = `${result.instance_url}/secur/frontdoor.jsp?sid=${encodeURIComponent(result.access_token)}&retURL=%2F`;
+    // 4 — Trade the token for a single-use frontdoor URL (server-to-server), so
+    // no access token ever appears in a URL the browser sees or stores.
+    const url = await requestFrontdoorUri(
+      result.instance_url,
+      SINGLE_ACCESS_PATH,
+      result.access_token,
+    );
     logs.push({
       step: "FrontDoor URL ready — opening Salesforce",
       status: "ok",
@@ -508,7 +516,7 @@ router.post(
         Date.now() - start,
         { fromCache: false },
       );
-      res.json({ sf_username, ...row, from_cache: false });
+      res.json(toPublicSfToken(sf_username, row, false));
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Token refresh failed";
       res.status(400).json({ error: msg });
