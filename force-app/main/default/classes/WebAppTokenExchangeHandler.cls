@@ -7,6 +7,9 @@ public class WebAppTokenExchangeHandler extends Auth.Oauth2TokenExchangeHandler 
     // https://<AUTH0_DOMAIN>.
     private static final String AUTH0_DOMAIN = 'dev-r4412run2i8kg030.us.auth0.com';
     private static final String AUTH0_DOMAIN_PLACEHOLDER = 'REPLACE_WITH_TENANT.auth0.com';
+    // Client ID of the Auth0 application that issues the id_token we accept. Tokens
+    // issued to any other application in the tenant are rejected (audience check).
+    private static final String AUTH0_CLIENT_ID = 'vtImy2fRiNOXszjLdks7KqiH4TC8Kfuc';
     private static final String JWKS_PATH = '/.well-known/jwks.json';
     private static final String ISSUER_SCHEME = 'https://';
 
@@ -62,6 +65,14 @@ public class WebAppTokenExchangeHandler extends Auth.Oauth2TokenExchangeHandler 
             return new Auth.TokenValidationResult(
                 false, null, null, incomingToken, tokenType,
                 'Untrusted issuer: ' + iss
+            );
+        }
+
+        // The token must have been issued to our web app, not another Auth0 app.
+        if (!isIssuedToThisApp(jwt.getAud())) {
+            return new Auth.TokenValidationResult(
+                false, null, null, incomingToken, tokenType,
+                'Token audience is not this application'
             );
         }
 
@@ -129,6 +140,21 @@ public class WebAppTokenExchangeHandler extends Auth.Oauth2TokenExchangeHandler 
             LIMIT 1
         ];
         return users.isEmpty() ? null : users[0];
+    }
+
+    // Salesforce returns aud as the plain client id, or as a bracketed list
+    // ('[id]' or '[id1, id2]') when the token has several audiences. Requires an
+    // exact match on one entry, never a substring.
+    private static Boolean isIssuedToThisApp(String aud) {
+        if (String.isBlank(aud)) {
+            return false;
+        }
+        for (String entry : aud.replace('[', '').replace(']', '').replace('"', '').split(',')) {
+            if (entry.trim() == AUTH0_CLIENT_ID) {
+                return true;
+            }
+        }
+        return false;
     }
 
     // Salesforce returns exp from getAdditionalClaims() as a UTC date-time string
