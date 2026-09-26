@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ExtlClntAppOauthSettings xmlns="http://soap.sforce.com/2006/04/metadata">
-    <commaSeparatedOauthScopes>Api, RefreshToken, OpenID, Web</commaSeparatedOauthScopes>
+    <commaSeparatedOauthScopes>Api, Web, RefreshToken, OpenID</commaSeparatedOauthScopes>
     <externalClientApplication>sgummallaworks_token_exchange</externalClientApplication>
     <isFirstPartyAppEnabled>false</isFirstPartyAppEnabled>
     <label>sgummallaworks_token_exchange_oauth</label>
