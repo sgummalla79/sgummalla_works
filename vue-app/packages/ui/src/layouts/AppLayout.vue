@@ -55,10 +55,6 @@ function handleProfile() {
   router.push("/profile");
 }
 
-function handleConfiguration() {
-  router.push("/configuration");
-}
-
 function handleNavigate(href: string) {
   router.push(href);
 }
@@ -261,7 +257,6 @@ async function handleThemeColor(color: string) {
           :is-owner="!!isOwner"
           @profile="handleProfile"
           :configuration-links="CONFIGURATION_LINKS"
-          @configuration="handleConfiguration"
           @navigate="handleNavigate"
           @article-drafts="handleArticleDrafts"
           @logout="emit('logout')"

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from "vue";
+import { ref, watch, onMounted, onUnmounted } from "vue";
 
 const props = defineProps<{
   name?: string;
@@ -13,7 +13,6 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   profile: [];
-  configuration: [];
   navigate: [href: string];
   "article-drafts": [];
   usage: [];
@@ -37,6 +36,16 @@ function selectColor(color: string) {
 }
 
 const open = ref(false);
+type SubMenu = "configuration" | "color";
+const expandedMenu = ref<SubMenu | null>(null);
+
+function toggleSubMenu(menu: SubMenu) {
+  expandedMenu.value = expandedMenu.value === menu ? null : menu;
+}
+
+watch(open, (isOpen) => {
+  if (!isOpen) expandedMenu.value = null;
+});
 const containerRef = ref<HTMLElement | null>(null);
 
 const isGuest = props.guest || !props.name;
@@ -152,15 +161,14 @@ onUnmounted(() =>
             Article Drafts
           </button>
 
-          <div class="vz-avatar-sub-wrap">
+          <div
+            class="vz-avatar-sub-wrap"
+            :class="{ 'is-expanded': expandedMenu === 'configuration' }"
+          >
             <button
               class="vz-avatar-item"
-              @click="
-                () => {
-                  open = false;
-                  $emit('configuration');
-                }
-              "
+              :aria-expanded="expandedMenu === 'configuration'"
+              @click="toggleSubMenu('configuration')"
             >
               <svg
                 width="14"
@@ -216,8 +224,15 @@ onUnmounted(() =>
         </template>
 
         <!-- Theme color picker -->
-        <div class="vz-avatar-color-wrap">
-          <button class="vz-avatar-item vz-avatar-item--color">
+        <div
+          class="vz-avatar-color-wrap"
+          :class="{ 'is-expanded': expandedMenu === 'color' }"
+        >
+          <button
+            class="vz-avatar-item vz-avatar-item--color"
+            :aria-expanded="expandedMenu === 'color'"
+            @click="toggleSubMenu('color')"
+          >
             <svg
               width="14"
               height="14"
@@ -542,7 +557,7 @@ onUnmounted(() =>
   color: #fff;
 }
 
-/* ── Configuration sub-menu (expands on hover / keyboard focus) ── */
+/* ── Configuration sub-menu (expands on click) ── */
 .vz-avatar-sub-wrap {
   position: relative;
 }
@@ -554,8 +569,7 @@ onUnmounted(() =>
   transition: grid-template-rows 0.25s ease;
 }
 
-.vz-avatar-sub-wrap:hover .vz-avatar-sub-panel,
-.vz-avatar-sub-wrap:focus-within .vz-avatar-sub-panel {
+.vz-avatar-sub-wrap.is-expanded .vz-avatar-sub-panel {
   grid-template-rows: 1fr;
 }
 
@@ -590,7 +604,7 @@ onUnmounted(() =>
   border-top: 0px solid var(--vz-border);
 }
 
-.vz-avatar-color-wrap:hover .vz-avatar-color-panel {
+.vz-avatar-color-wrap.is-expanded .vz-avatar-color-panel {
   max-height: 56px;
   border-top-width: 1px;
 }
